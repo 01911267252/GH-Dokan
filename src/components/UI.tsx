@@ -70,6 +70,7 @@ interface ConfirmModalProps {
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'info';
+  children?: React.ReactNode;
 }
 
 import { AlertTriangle, Info, X as CloseIcon } from 'lucide-react';
@@ -83,7 +84,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   message, 
   confirmText = 'Confirm', 
   cancelText = 'Cancel',
-  type = 'danger'
+  type = 'danger',
+  children
 }) => {
   return (
     <AnimatePresence>
@@ -111,7 +113,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
               </div>
 
               <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{title}</h3>
-              <p className="text-slate-500 dark:text-slate-400 mb-8">{message}</p>
+              <p className="text-slate-500 dark:text-slate-400 mb-6">{message}</p>
+
+              {children && <div className="w-full mb-8">{children}</div>}
 
               <div className="flex gap-3 w-full">
                 <button

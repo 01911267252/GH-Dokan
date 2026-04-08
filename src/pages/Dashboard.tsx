@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -71,7 +71,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const calculateStats = () => {
+  const stats = useMemo(() => {
     const now = new Date();
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);
@@ -106,14 +106,11 @@ const Dashboard: React.FC = () => {
       todayExpenses,
       monthlyProfit: monthlySales - monthlyExpenses
     };
-  };
+  }, [transactions]);
 
-  const stats = calculateStats();
-
-  const getChartData = () => {
+  const chartData = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
     
     // Show up to last 6 months but only within the current year
     const monthsToShow = Math.min(currentMonth + 1, 6);
@@ -140,14 +137,20 @@ const Dashboard: React.FC = () => {
     });
 
     return yearMonths;
-  };
-
-  const chartData = getChartData();
+  }, [transactions]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="space-y-8 pb-10 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-32 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 h-[400px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800" />
+          <div className="h-[400px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800" />
+        </div>
       </div>
     );
   }
@@ -184,7 +187,7 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Section title={t.report} className="lg:col-span-2">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 h-[400px]">
+          <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 h-[300px] sm:h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>

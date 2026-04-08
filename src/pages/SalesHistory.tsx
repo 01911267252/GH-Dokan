@@ -78,6 +78,25 @@ const SalesHistory: React.FC = () => {
     if (!editingTx || !isAdmin) return;
 
     try {
+      // 1. If it's a stock transaction, adjust stock
+      if (editingTx.stock_id) {
+        const { data: stockData } = await supabase
+          .from('stock')
+          .select('current_quantity')
+          .eq('id', editingTx.stock_id)
+          .single();
+
+        if (stockData) {
+          const qtyDiff = (editingTx.quantity || 0) - editFormData.quantity;
+          await supabase
+            .from('stock')
+            .update({
+              current_quantity: stockData.current_quantity + qtyDiff
+            })
+            .eq('id', editingTx.stock_id);
+        }
+      }
+
       const { error } = await supabase
         .from('transactions')
         .update({
@@ -104,6 +123,25 @@ const SalesHistory: React.FC = () => {
 
     try {
       const txToDelete = transactions.find(t => t.id === deletingId);
+      
+      // 1. If it's a stock transaction, adjust stock
+      if (txToDelete?.stock_id) {
+        const { data: stockData } = await supabase
+          .from('stock')
+          .select('current_quantity')
+          .eq('id', txToDelete.stock_id)
+          .single();
+
+        if (stockData) {
+          await supabase
+            .from('stock')
+            .update({
+              current_quantity: stockData.current_quantity + (txToDelete.quantity || 0)
+            })
+            .eq('id', txToDelete.stock_id);
+        }
+      }
+
       const { error } = await supabase
         .from('transactions')
         .delete()
@@ -196,16 +234,16 @@ const SalesHistory: React.FC = () => {
               >
                 <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                    <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                       <Calendar size={18} className="text-blue-600" />
                     </div>
-                    <span className="font-bold text-slate-800 dark:text-white">
+                    <span className="font-bold text-slate-800 dark:text-white font-mono">
                       {formatDate(date, language === 'bn' ? 'bn-BD' : 'en-US')}
                     </span>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{t.dailyTotal}</p>
-                    <p className="text-lg font-black text-green-600">
+                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.dailyTotal}</p>
+                    <p className="text-lg font-black text-green-600 font-mono">
                       {formatCurrency(dayTotal, language === 'bn' ? 'bn-BD' : 'en-US')}
                     </p>
                   </div>
@@ -213,18 +251,25 @@ const SalesHistory: React.FC = () => {
 
                 <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
                   {dayTransactions.map(tx => (
-                    <div key={tx.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group">
+                    <div key={tx.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group border-l-4 border-l-transparent hover:border-l-blue-500">
                       <div className="flex items-start gap-4">
                         <div className="mt-1">
                           <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-slate-800 dark:text-white text-lg">{tx.product_name}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-slate-800 dark:text-white text-lg">{tx.product_name}</h4>
+                            {tx.size && (
+                              <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase rounded-md border border-slate-200 dark:border-slate-700 font-mono">
+                                {tx.size}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                            <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
                               <span className="font-semibold text-slate-700 dark:text-slate-300">{t.quantity}:</span> {tx.quantity}
                             </span>
-                            <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
                               <span className="font-semibold text-slate-700 dark:text-slate-300">{t.price}:</span> {formatCurrency(tx.price || 0, language === 'bn' ? 'bn-BD' : 'en-US')}
                             </span>
                           </div>
@@ -238,8 +283,8 @@ const SalesHistory: React.FC = () => {
 
                       <div className="flex items-center justify-between sm:justify-end gap-6">
                         <div className="text-right">
-                          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{t.total}</p>
-                          <p className="text-xl font-black text-slate-800 dark:text-white">
+                          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold font-mono">{t.total}</p>
+                          <p className="text-xl font-black text-slate-800 dark:text-white font-mono">
                             {formatCurrency(tx.total, language === 'bn' ? 'bn-BD' : 'en-US')}
                           </p>
                         </div>

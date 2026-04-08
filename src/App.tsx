@@ -6,9 +6,11 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Toaster } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'motion/react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { ActionProvider } from './context/ActionContext';
 import Sidebar from './components/Sidebar';
+import BottomNav from './components/BottomNav';
 import { cn } from './lib/utils';
 import Dashboard from './pages/Dashboard';
 import AddSale from './pages/AddSale';
@@ -20,6 +22,7 @@ import ExpenseHistory from './pages/ExpenseHistory';
 import MonthlyReport from './pages/MonthlyReport';
 import Notes from './pages/Notes';
 import Settings from './pages/Settings';
+import StockManagement from './pages/StockManagement';
 import ActionHistory from './components/ActionHistory';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -43,7 +46,28 @@ export interface Transaction {
   expense_type?: string;
   title?: string;
   note?: string;
+  stock_id?: string;
+  is_manual?: boolean;
+  size?: string;
   created_at: string;
+}
+
+export interface Stock {
+  id: string;
+  product_name: string;
+  size?: string;
+  initial_quantity: number;
+  current_quantity: number;
+  created_at: string;
+}
+
+export interface StockLog {
+  id: string;
+  stock_id: string;
+  type: 'restock' | 'sale';
+  quantity: number;
+  date: string;
+  note?: string;
 }
 
 export interface Note {
@@ -94,6 +118,7 @@ const AppContent: React.FC = () => {
       case 'expense-history': return <ExpenseHistory />;
       case 'report': return <MonthlyReport />;
       case 'notes': return <Notes />;
+      case 'stock': return <StockManagement />;
       case 'settings': return <Settings />;
       default: return <Dashboard />;
     }
@@ -106,11 +131,23 @@ const AppContent: React.FC = () => {
     )}>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
-      <main className="lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
-        <div className="max-w-7xl mx-auto">
-          {renderPage()}
+      <main className="lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8 pb-24 lg:pb-8 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto w-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              {renderPage()}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
+
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <ActionHistory />
 

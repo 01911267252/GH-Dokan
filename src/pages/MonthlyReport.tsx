@@ -98,18 +98,18 @@ const MonthlyReport: React.FC = () => {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.report}</h2>
-        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-100 dark:border-slate-800">
-          <div className="px-4 py-2 text-center border-r border-slate-100 dark:border-slate-800">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{t.sale}</p>
-            <p className="text-sm font-bold text-green-600">{formatCurrency(totalStats.sales, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
+        <div className="flex items-center gap-2 sm:gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-x-auto no-scrollbar">
+          <div className="px-3 sm:px-4 py-2 text-center border-r border-slate-100 dark:border-slate-800 whitespace-nowrap">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.sale}</p>
+            <p className="text-sm font-bold text-green-600 font-mono">{formatCurrency(totalStats.sales, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
           </div>
-          <div className="px-4 py-2 text-center border-r border-slate-100 dark:border-slate-800">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{t.expense}</p>
-            <p className="text-sm font-bold text-red-600">{formatCurrency(totalStats.expenses, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
+          <div className="px-3 sm:px-4 py-2 text-center border-r border-slate-100 dark:border-slate-800 whitespace-nowrap">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.expense}</p>
+            <p className="text-sm font-bold text-red-600 font-mono">{formatCurrency(totalStats.expenses, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
           </div>
-          <div className="px-4 py-2 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{t.profit}</p>
-            <p className={cn("text-sm font-bold", totalStats.profit >= 0 ? "text-blue-600" : "text-red-600")}>
+          <div className="px-3 sm:px-4 py-2 text-center whitespace-nowrap">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.profit}</p>
+            <p className={cn("text-sm font-bold font-mono", totalStats.profit >= 0 ? "text-blue-600" : "text-red-600")}>
               {formatCurrency(totalStats.profit, language === 'bn' ? 'bn-BD' : 'en-US')}
             </p>
           </div>
@@ -146,19 +146,19 @@ const MonthlyReport: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {monthlyData.slice().reverse().map((data, idx) => (
           <div key={idx} className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">{data.month}</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 font-mono">{data.month}</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 dark:text-slate-400">{t.sale}</span>
-                <span className="font-bold text-green-600">{formatCurrency(data.sales, language === 'bn' ? 'bn-BD' : 'en-US')}</span>
+                <span className="font-bold text-green-600 font-mono">{formatCurrency(data.sales, language === 'bn' ? 'bn-BD' : 'en-US')}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 dark:text-slate-400">{t.expense}</span>
-                <span className="font-bold text-red-600">{formatCurrency(data.expenses, language === 'bn' ? 'bn-BD' : 'en-US')}</span>
+                <span className="font-bold text-red-600 font-mono">{formatCurrency(data.expenses, language === 'bn' ? 'bn-BD' : 'en-US')}</span>
               </div>
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <span className="font-bold text-slate-800 dark:text-white">{t.profit}</span>
-                <span className={cn("font-bold", data.profit >= 0 ? "text-blue-600" : "text-red-600")}>
+                <span className={cn("font-bold font-mono", data.profit >= 0 ? "text-blue-600" : "text-red-600")}>
                   {formatCurrency(data.profit, language === 'bn' ? 'bn-BD' : 'en-US')}
                 </span>
               </div>

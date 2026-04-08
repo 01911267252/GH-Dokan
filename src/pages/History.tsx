@@ -63,6 +63,25 @@ const History: React.FC = () => {
 
     try {
       const txToDelete = transactions.find(t => t.id === deletingId);
+      
+      // 1. If it's a stock transaction, adjust stock
+      if (txToDelete?.stock_id) {
+        const { data: stockData } = await supabase
+          .from('stock')
+          .select('current_quantity')
+          .eq('id', txToDelete.stock_id)
+          .single();
+
+        if (stockData) {
+          await supabase
+            .from('stock')
+            .update({
+              current_quantity: stockData.current_quantity + (txToDelete.quantity || 0)
+            })
+            .eq('id', txToDelete.stock_id);
+        }
+      }
+
       const { error } = await supabase
         .from('transactions')
         .delete()
@@ -199,9 +218,16 @@ const History: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-slate-800 dark:text-white">
-                      {tx.type === 'sale' ? tx.product_name : tx.title || t[tx.type as keyof typeof t]}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-slate-800 dark:text-white">
+                        {tx.type === 'sale' ? tx.product_name : tx.title || t[tx.type as keyof typeof t]}
+                      </p>
+                      {tx.size && (
+                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase rounded-md border border-slate-200 dark:border-slate-700">
+                          {tx.size}
+                        </span>
+                      )}
+                    </div>
                     {tx.quantity && (
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         Qty: {tx.quantity} × {formatCurrency(tx.price || 0, language === 'bn' ? 'bn-BD' : 'en-US')}

@@ -8,17 +8,78 @@ import {
   Lock, 
   LogOut, 
   ShieldCheck,
-  User
+  User,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { cn } from '../lib/utils';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../App';
+import { ConfirmModal } from '../components/UI';
 
 const Settings: React.FC = () => {
   const { language, setLanguage, theme, setTheme, isAdmin, setIsAdmin } = useAppContext();
   const t = TRANSLATIONS[language];
   const [password, setPassword] = useState('');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [clearType, setClearType] = useState<'all' | 'transactions' | 'stock' | 'notes'>('all');
+  const [clearPassword, setClearPassword] = useState('');
+
+  const handleClearData = async () => {
+    if (!isAdmin) return;
+    
+    if (clearPassword !== '12123') {
+      toast.error('Incorrect clear password');
+      return;
+    }
+
+    setIsClearing(true);
+    try {
+      let tables: string[] = [];
+      let successMessage = '';
+
+      if (clearType === 'all') {
+        tables = ['transactions', 'stock_logs', 'stock', 'notes'];
+        successMessage = 'All data cleared successfully';
+      } else if (clearType === 'transactions') {
+        tables = ['transactions'];
+        successMessage = 'All transactions cleared successfully';
+      } else if (clearType === 'stock') {
+        tables = ['stock', 'stock_logs'];
+        successMessage = 'Stock data cleared successfully';
+      } else if (clearType === 'notes') {
+        tables = ['notes'];
+        successMessage = 'Cash/Notes cleared successfully';
+      }
+      
+      for (const table of tables) {
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .neq('id', '00000000-0000-0000-0000-000000000000');
+        
+        if (error) throw error;
+      }
+
+      toast.success(successMessage);
+    } catch (error: any) {
+      console.error('Error clearing data:', error);
+      toast.error('Failed to clear data: ' + error.message);
+    } finally {
+      setIsClearing(false);
+      setShowClearConfirm(false);
+      setClearPassword('');
+    }
+  };
+
+  const openClearConfirm = (type: 'all' | 'transactions' | 'stock' | 'notes') => {
+    setClearType(type);
+    setClearPassword('');
+    setShowClearConfirm(true);
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,12 +216,124 @@ const Settings: React.FC = () => {
           )}
         </div>
 
+        {/* Danger Zone */}
+        {isAdmin && (
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-red-100 dark:border-red-900/20">
+            <h3 className="text-lg font-bold text-red-600 mb-6 flex items-center gap-2">
+              <AlertTriangle size={20} /> Danger Zone
+            </h3>
+            
+            <div className="space-y-4">
+              {/* Clear Transactions */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-slate-800 dark:text-white">Clear Transactions</p>
+                  <p className="text-xs text-slate-500">Delete all sales and expenses history.</p>
+                </div>
+                <button
+                  onClick={() => openClearConfirm('transactions')}
+                  className="px-6 py-2 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-all text-sm"
+                >
+                  Clear Sales/Expenses
+                </button>
+              </div>
+
+              {/* Clear Stock */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-slate-800 dark:text-white">Clear Stock</p>
+                  <p className="text-xs text-slate-500">Delete all products and stock logs.</p>
+                </div>
+                <button
+                  onClick={() => openClearConfirm('stock')}
+                  className="px-6 py-2 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-all text-sm"
+                >
+                  Clear Stock Data
+                </button>
+              </div>
+
+              {/* Clear Notes */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-slate-800 dark:text-white">Clear Cash/Notes</p>
+                  <p className="text-xs text-slate-500">Delete all cash entries and notes.</p>
+                </div>
+                <button
+                  onClick={() => openClearConfirm('notes')}
+                  className="px-6 py-2 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-all text-sm"
+                >
+                  Clear Cash Data
+                </button>
+              </div>
+
+              {/* Clear Everything */}
+              <div className="p-6 rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 mt-4">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-2xl">
+                    <Trash2 size={24} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-red-800 dark:text-red-400">Clear All Data</p>
+                    <p className="text-sm text-red-600 dark:text-red-500">This will permanently delete EVERYTHING. This action cannot be undone.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => openClearConfirm('all')}
+                  disabled={isClearing}
+                  className="w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-200 dark:shadow-none"
+                >
+                  {isClearing ? (
+                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <Trash2 size={20} />
+                  )}
+                  Clear Everything
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* About Section */}
         <div className="text-center pt-4">
           <p className="text-sm text-slate-400">GH Sports PRO v1.0.0</p>
           <p className="text-xs text-slate-400 mt-1">© 2026 Shop Management System</p>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+        onConfirm={handleClearData}
+        title={
+          clearType === 'all' ? "Clear Everything?" :
+          clearType === 'transactions' ? "Clear Transactions?" :
+          clearType === 'stock' ? "Clear Stock Data?" : "Clear Cash Data?"
+        }
+        message={
+          clearType === 'all' ? "Are you absolutely sure? This will delete everything and reset the app to a clean state." :
+          clearType === 'transactions' ? "This will delete all sales and expenses history. This action is permanent." :
+          clearType === 'stock' ? "This will delete all products and their history. This action is permanent." :
+          "This will delete all cash entries and notes. This action is permanent."
+        }
+        confirmText="Yes, Clear Data"
+        cancelText="No, Keep Data"
+        type="danger"
+      >
+        <div className="space-y-2 text-left">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <Lock size={14} /> Enter Clear Password
+          </label>
+          <input
+            type="password"
+            value={clearPassword}
+            onChange={(e) => setClearPassword(e.target.value)}
+            placeholder="Enter password to confirm"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+            autoFocus
+          />
+        </div>
+      </ConfirmModal>
     </div>
   );
 };

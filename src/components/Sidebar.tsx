@@ -15,7 +15,8 @@ import {
   Sun,
   Languages,
   ShoppingBag,
-  TrendingDown
+  TrendingDown,
+  Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppContext } from '../context/AppContext';
@@ -39,6 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'add-cash', label: t.addCash, icon: Wallet },
     { id: 'sales-history', label: t.salesHistory, icon: ShoppingBag },
     { id: 'expense-history', label: t.expenseHistory, icon: TrendingDown },
+    { id: 'stock', label: t.stockManagement, icon: Package },
     { id: 'history', label: t.history, icon: History },
     { id: 'report', label: t.report, icon: BarChart3 },
     { id: 'notes', label: t.notes, icon: StickyNote },
@@ -50,10 +52,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   return (
     <>
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-4 right-4 z-50">
         <button 
           onClick={toggleSidebar}
-          className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg text-slate-600 dark:text-slate-300"
+          className="p-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-xl shadow-lg text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -75,19 +77,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       {/* Sidebar Content */}
       <motion.aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-40 transition-transform duration-300 lg:translate-x-0",
+          "fixed top-0 left-0 h-full w-full sm:w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-40 transition-transform duration-300 lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex flex-col h-full p-6">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
+          <div className="flex items-center gap-3 mb-10 px-2">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-200 dark:shadow-none">
               G
             </div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-white">GH Sports PRO</h1>
+            <div>
+              <h1 className="text-lg font-black text-slate-800 dark:text-white leading-tight">GH Sports</h1>
+              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Management Pro</p>
+            </div>
           </div>
 
-          <nav className="flex-1 space-y-1">
+          <nav className="flex-1 space-y-1 overflow-y-auto no-scrollbar">
             {menuItems.map((item) => (
               <button
                 key={item.id}
