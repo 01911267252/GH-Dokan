@@ -13,6 +13,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { TRANSLATIONS } from '../constants';
 import { cn } from '../lib/utils';
 import { toast } from 'react-hot-toast';
@@ -20,9 +21,9 @@ import { supabase } from '../App';
 import { ConfirmModal } from '../components/UI';
 
 const Settings: React.FC = () => {
-  const { language, setLanguage, theme, setTheme, isAdmin, setIsAdmin } = useAppContext();
+  const { language, setLanguage, theme, setTheme } = useAppContext();
+  const { user, isAdmin, signOut } = useAuth();
   const t = TRANSLATIONS[language];
-  const [password, setPassword] = useState('');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [clearType, setClearType] = useState<'all' | 'transactions' | 'stock' | 'notes'>('all');
@@ -79,17 +80,6 @@ const Settings: React.FC = () => {
     setClearType(type);
     setClearPassword('');
     setShowClearConfirm(true);
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === '2889') {
-      setIsAdmin(true);
-      setPassword('');
-      toast.success('Admin access granted');
-    } else {
-      toast.error('Incorrect password');
-    }
   };
 
   return (
@@ -173,11 +163,11 @@ const Settings: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-bold text-green-800 dark:text-green-400">Admin Mode Active</p>
-                  <p className="text-sm text-green-600 dark:text-green-500">You have full access to edit and delete data.</p>
+                  <p className="text-sm text-green-600 dark:text-green-500">You have full access to manage the system.</p>
                 </div>
               </div>
               <button
-                onClick={() => setIsAdmin(false)}
+                onClick={() => signOut()}
                 className="w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all flex items-center justify-center gap-2"
               >
                 <LogOut size={20} /> {t.logout}
@@ -190,28 +180,13 @@ const Settings: React.FC = () => {
                   <Lock size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800 dark:text-white">{t.adminLogin}</p>
-                  <p className="text-sm text-slate-500">Enter password to enable edit mode.</p>
+                  <p className="font-bold text-slate-800 dark:text-white">Visitor Mode</p>
+                  <p className="text-sm text-slate-500">You are currently in read-only mode.</p>
                 </div>
               </div>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t.password}
-                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all"
-                >
-                  {t.login}
-                </button>
-              </form>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                To enable editing, please enter the admin password from the sidebar or the login page.
+              </p>
             </div>
           )}
         </div>

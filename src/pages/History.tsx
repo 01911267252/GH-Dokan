@@ -13,17 +13,17 @@ import {
 } from 'lucide-react';
 import { supabase, Transaction } from '../App';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useAction } from '../context/ActionContext';
 import { TRANSLATIONS } from '../constants';
 import { cn, formatCurrency, formatDate } from '../lib/utils';
 import { ConfirmModal } from '../components/UI';
+import { exportToPDF, exportToExcel } from '../lib/exportUtils';
 import { toast } from 'react-hot-toast';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 
 const History: React.FC = () => {
-  const { language, isAdmin } = useAppContext();
+  const { language } = useAppContext();
+  const { user, isAdmin } = useAuth();
   const { recordAction } = useAction();
   const t = TRANSLATIONS[language];
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -38,15 +38,9 @@ const History: React.FC = () => {
 
   const fetchTransactions = async () => {
     try {
-      const currentYear = new Date().getFullYear();
-      const startOfYear = new Date(currentYear, 0, 1).toISOString();
-      const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59).toISOString();
-
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
-        .gte('date', startOfYear)
-        .lte('date', endOfYear)
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -109,36 +103,26 @@ const History: React.FC = () => {
     return matchesFilter && matchesSearch;
   });
 
-  const exportPDF = () => {
-    const doc = new jsPDF();
-    doc.text('GH Sports PRO - Transaction History', 14, 15);
-    
-    const tableData = filteredTransactions.map(tx => [
+  const handleExportPDF = () => {
+    const headers = ['Date', 'Type', 'Description', 'Amount'];
+    const data = filteredTransactions.map(tx => [
       formatDate(tx.date, 'en-US'),
       tx.type.toUpperCase(),
       tx.type === 'sale' ? tx.product_name : (tx.title || tx.type),
-      tx.total.toString()
+      tx.total
     ]);
-
-    (doc as any).autoTable({
-      head: [['Date', 'Type', 'Description', 'Amount (BDT)']],
-      body: tableData,
-      startY: 20,
-    });
-
-    doc.save('transactions.pdf');
+    exportToPDF('Transaction History', headers, data, 'transactions');
   };
 
-  const exportExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(filteredTransactions.map(tx => ({
+  const handleExportExcel = () => {
+    const data = filteredTransactions.map(tx => ({
       Date: formatDate(tx.date, 'en-US'),
       Type: tx.type,
       Description: tx.type === 'sale' ? tx.product_name : (tx.title || tx.type),
-      Amount: tx.total
-    })));
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
-    XLSX.writeFile(workbook, "transactions.xlsx");
+      Amount: tx.total,
+      Note: tx.note || ''
+    }));
+    exportToExcel(data, 'transactions');
   };
 
   return (
@@ -148,13 +132,13 @@ const History: React.FC = () => {
         
         <div className="flex items-center gap-2">
           <button 
-            onClick={exportPDF}
+            onClick={handleExportPDF}
             className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors text-sm font-medium"
           >
             <FileText size={18} /> PDF
           </button>
           <button 
-            onClick={exportExcel}
+            onClick={handleExportExcel}
             className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors text-sm font-medium"
           >
             <TableIcon size={18} /> Excel
@@ -194,20 +178,20 @@ const History: React.FC = () => {
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
               <tr>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400">{t.date}</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Type</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Description</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Amount</th>
-                {isAdmin && <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 text-right">Actions</th>}
+                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">{t.date}</th>
+                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Type</th>
+                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Description</th>
+                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Amount</th>
+                {isAdmin && <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 text-right whitespace-nowrap">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredTransactions.map((tx) => (
                 <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
                     {formatDate(tx.date, language === 'bn' ? 'bn-BD' : 'en-US')}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={cn(
                       "px-3 py-1 rounded-full text-xs font-bold uppercase",
                       tx.type === 'sale' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
@@ -239,7 +223,7 @@ const History: React.FC = () => {
                       </p>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <p className={cn(
                       "text-sm font-bold",
                       tx.type === 'sale' ? "text-green-600" : 

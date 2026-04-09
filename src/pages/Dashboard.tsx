@@ -51,15 +51,9 @@ const Dashboard: React.FC = () => {
 
   const fetchTransactions = async () => {
     try {
-      const currentYear = new Date().getFullYear();
-      const startOfYear = new Date(currentYear, 0, 1).toISOString();
-      const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59).toISOString();
-
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
-        .gte('date', startOfYear)
-        .lte('date', endOfYear)
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -157,13 +151,13 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard
           title={t.balance}
           value={formatCurrency(stats.totalBalance, language === 'bn' ? 'bn-BD' : 'en-US')}
           icon={<Wallet size={24} />}
           color="blue"
-          className="md:col-span-2 lg:col-span-1 bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-blue-200 dark:shadow-none"
+          className="sm:col-span-2 lg:col-span-1 bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-blue-200 dark:shadow-none"
         />
         <StatCard
           title={t.todaySales}
@@ -185,9 +179,9 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         <Section title={t.report} className="lg:col-span-2">
-          <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 h-[300px] sm:h-[400px]">
+          <div className="bg-white dark:bg-slate-900 p-3 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 h-[250px] sm:h-[350px] md:h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>

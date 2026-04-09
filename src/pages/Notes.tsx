@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { StickyNote, Plus, Trash2, Edit3, Save, X, Calendar } from 'lucide-react';
 import { supabase, Note } from '../App';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useAction } from '../context/ActionContext';
 import { TRANSLATIONS } from '../constants';
 import { formatDate } from '../lib/utils';
@@ -10,7 +11,8 @@ import { ConfirmModal } from '../components/UI';
 import { toast } from 'react-hot-toast';
 
 const Notes: React.FC = () => {
-  const { language, isAdmin } = useAppContext();
+  const { language } = useAppContext();
+  const { user, isAdmin } = useAuth();
   const { recordAction } = useAction();
   const t = TRANSLATIONS[language];
   const [notes, setNotes] = useState<Note[]>([]);
@@ -151,8 +153,6 @@ const Notes: React.FC = () => {
               <input
                 type="date"
                 value={formData.date}
-                min="2026-01-01"
-                max="2026-12-31"
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                 required
@@ -177,7 +177,7 @@ const Notes: React.FC = () => {
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {notes.map((note) => (
           <motion.div
             key={note.id}

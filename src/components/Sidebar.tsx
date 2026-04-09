@@ -11,6 +11,8 @@ import {
   Menu,
   X,
   LogOut,
+  LogIn,
+  Users,
   Moon,
   Sun,
   Languages,
@@ -20,6 +22,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { TRANSLATIONS } from '../constants';
 import { cn } from '../lib/utils';
 
@@ -29,15 +32,16 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { language, setLanguage, theme, setTheme, isAdmin, setIsAdmin } = useAppContext();
+  const { language, setLanguage, theme, setTheme } = useAppContext();
+  const { user, isAdmin, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const t = TRANSLATIONS[language];
 
   const menuItems = [
     { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard },
-    { id: 'add-sale', label: t.addSale, icon: PlusCircle },
-    { id: 'add-expense', label: t.addExpense, icon: MinusCircle },
-    { id: 'add-cash', label: t.addCash, icon: Wallet },
+    { id: 'add-sale', label: t.addSale, icon: PlusCircle, adminOnly: true },
+    { id: 'add-expense', label: t.addExpense, icon: MinusCircle, adminOnly: true },
+    { id: 'add-cash', label: t.addCash, icon: Wallet, adminOnly: true },
     { id: 'sales-history', label: t.salesHistory, icon: ShoppingBag },
     { id: 'expense-history', label: t.expenseHistory, icon: TrendingDown },
     { id: 'stock', label: t.stockManagement, icon: Package },
@@ -93,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto no-scrollbar">
-            {menuItems.map((item) => (
+            {menuItems.filter(item => !item.adminOnly || isAdmin).map((item) => (
               <button
                 key={item.id}
                 onClick={() => {
@@ -130,13 +134,27 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
               </button>
             </div>
 
-            {isAdmin && (
+            {isAdmin ? (
               <button
-                onClick={() => setIsAdmin(false)}
+                onClick={() => {
+                  signOut();
+                  setActiveTab('dashboard');
+                }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all font-bold text-sm"
               >
                 <LogOut size={18} />
-                <span>{t.logout}</span>
+                <span>Lock Admin</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setActiveTab('login');
+                  setIsOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all font-bold text-sm"
+              >
+                <LogIn size={18} />
+                <span>Admin Access</span>
               </button>
             )}
 

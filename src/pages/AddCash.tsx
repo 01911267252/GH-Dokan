@@ -3,13 +3,15 @@ import { motion } from 'motion/react';
 import { Wallet, Calendar, DollarSign, StickyNote, Save, History as HistoryIcon } from 'lucide-react';
 import { supabase, Transaction } from '../App';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useAction } from '../context/ActionContext';
 import { TRANSLATIONS } from '../constants';
 import { cn, formatCurrency, formatDate } from '../lib/utils';
 import { toast } from 'react-hot-toast';
 
 const AddCash: React.FC = () => {
-  const { language, isAdmin } = useAppContext();
+  const { language } = useAppContext();
+  const { user, isAdmin } = useAuth();
   const { recordAction } = useAction();
   const t = TRANSLATIONS[language];
   const [loading, setLoading] = useState(false);
@@ -87,7 +89,7 @@ const AddCash: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 h-fit"
+        className="bg-white dark:bg-slate-900 p-4 sm:p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 h-fit"
       >
         <div className="flex items-center gap-4 mb-8">
           <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-2xl">
@@ -108,8 +110,6 @@ const AddCash: React.FC = () => {
               <input
                 type="date"
                 value={formData.date}
-                min="2026-01-01"
-                max="2026-12-31"
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 required
@@ -160,7 +160,7 @@ const AddCash: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800"
+        className="bg-white dark:bg-slate-900 p-4 sm:p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800"
       >
         <div className="flex items-center gap-4 mb-8">
           <div className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl">

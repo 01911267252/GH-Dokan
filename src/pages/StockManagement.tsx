@@ -16,13 +16,15 @@ import {
 } from 'lucide-react';
 import { supabase, Stock, StockLog, Transaction } from '../App';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { TRANSLATIONS } from '../constants';
 import { cn, formatDate, formatCurrency } from '../lib/utils';
 import { toast } from 'react-hot-toast';
 import { ConfirmModal } from '../components/UI';
 
 const StockManagement: React.FC = () => {
-  const { language, isAdmin } = useAppContext();
+  const { language } = useAppContext();
+  const { user, isAdmin } = useAuth();
   const t = TRANSLATIONS[language];
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,10 +39,12 @@ const StockManagement: React.FC = () => {
   const [formData, setFormData] = useState({
     product_name: '',
     size: '',
-    quantity: 0
+    quantity: 0,
+    date: new Date().toISOString().split('T')[0]
   });
 
   const [restockQty, setRestockQty] = useState(0);
+  const [restockDate, setRestockDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     fetchStocks();
@@ -139,7 +143,7 @@ const StockManagement: React.FC = () => {
             stock_id: existing.id,
             type: 'restock',
             quantity: formData.quantity,
-            date: new Date().toISOString(),
+            date: new Date(formData.date).toISOString(),
             note: 'Bulk Add'
           }]);
         } else {
@@ -150,7 +154,8 @@ const StockManagement: React.FC = () => {
               product_name: formData.product_name,
               size: size || null,
               initial_quantity: formData.quantity,
-              current_quantity: formData.quantity
+              current_quantity: formData.quantity,
+              created_at: new Date(formData.date).toISOString()
             }])
             .select();
 
@@ -162,7 +167,7 @@ const StockManagement: React.FC = () => {
               stock_id: data[0].id,
               type: 'restock',
               quantity: formData.quantity,
-              date: new Date().toISOString(),
+              date: new Date(formData.date).toISOString(),
               note: 'Initial Stock'
             }]);
           }
@@ -171,7 +176,7 @@ const StockManagement: React.FC = () => {
 
       toast.success(t.success);
       setIsAdding(false);
-      setFormData({ product_name: '', size: '', quantity: 0 });
+      setFormData({ product_name: '', size: '', quantity: 0, date: new Date().toISOString().split('T')[0] });
       fetchStocks();
     } catch (error) {
       console.error('Error adding stock:', error);
@@ -200,12 +205,13 @@ const StockManagement: React.FC = () => {
         stock_id: isRestocking.id,
         type: 'restock',
         quantity: restockQty,
-        date: new Date().toISOString()
+        date: new Date(restockDate).toISOString()
       }]);
 
       toast.success(t.success);
       setIsRestocking(null);
       setRestockQty(0);
+      setRestockDate(new Date().toISOString().split('T')[0]);
       fetchStocks();
     } catch (error) {
       console.error('Error restocking:', error);
@@ -272,7 +278,7 @@ const StockManagement: React.FC = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredStocks.map((stock) => (
             <motion.div
               key={stock.id}
@@ -375,7 +381,7 @@ const StockManagement: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-100 dark:border-slate-800"
+              className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-slate-100 dark:border-slate-800"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -420,6 +426,18 @@ const StockManagement: React.FC = () => {
                     min="1"
                   />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Calendar size={16} /> {t.date}
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    required
+                  />
+                </div>
                 
                 <button
                   type="submit"
@@ -441,7 +459,7 @@ const StockManagement: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-100 dark:border-slate-800"
+              className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-slate-100 dark:border-slate-800"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -471,7 +489,19 @@ const StockManagement: React.FC = () => {
                     min="1"
                   />
                 </div>
-                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Calendar size={16} /> {t.date}
+                  </label>
+                  <input
+                    type="date"
+                    value={restockDate}
+                    onChange={(e) => setRestockDate(e.target.value)}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    required
+                  />
+                </div>
+
                 <button
                   type="submit"
                   className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none mt-4"
@@ -492,7 +522,7 @@ const StockManagement: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-800 max-h-[90vh] flex flex-col"
+              className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-800 max-h-[90vh] flex flex-col"
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">

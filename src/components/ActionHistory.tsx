@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Undo2, Redo2, History, X, Trash2, PlusCircle } from 'lucide-react';
 import { useAction } from '../context/ActionContext';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { TRANSLATIONS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../lib/utils';
 
 const ActionHistory: React.FC = () => {
   const { undo, redo, canUndo, canRedo, history } = useAction();
-  const { language, isAdmin } = useAppContext();
+  const { language } = useAppContext();
+  const { user, isAdmin } = useAuth();
   const t = TRANSLATIONS[language];
   const [isOpen, setIsOpen] = useState(false);
 

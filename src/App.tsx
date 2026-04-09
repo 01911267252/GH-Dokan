@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppProvider, useAppContext } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ActionProvider } from './context/ActionContext';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
@@ -23,6 +24,7 @@ import MonthlyReport from './pages/MonthlyReport';
 import Notes from './pages/Notes';
 import Settings from './pages/Settings';
 import StockManagement from './pages/StockManagement';
+import Login from './pages/Login';
 import ActionHistory from './components/ActionHistory';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -80,6 +82,15 @@ export interface Note {
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { theme } = useAppContext();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return (
@@ -120,6 +131,7 @@ const AppContent: React.FC = () => {
       case 'notes': return <Notes />;
       case 'stock': return <StockManagement />;
       case 'settings': return <Settings />;
+      case 'login': return <Login setActiveTab={setActiveTab} />;
       default: return <Dashboard />;
     }
   };
@@ -182,9 +194,11 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <AppProvider>
-      <ActionProvider>
-        <AppContent />
-      </ActionProvider>
+      <AuthProvider>
+        <ActionProvider>
+          <AppContent />
+        </ActionProvider>
+      </AuthProvider>
     </AppProvider>
   );
 }

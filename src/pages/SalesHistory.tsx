@@ -6,20 +6,25 @@ import {
   Edit3, 
   ShoppingBag,
   ChevronRight,
-  Filter
+  Filter,
+  FileText,
+  Download
 } from 'lucide-react';
 import { supabase, Transaction } from '../App';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useAction } from '../context/ActionContext';
 import { TRANSLATIONS } from '../constants';
 import { cn, formatCurrency, formatDate } from '../lib/utils';
 import { ConfirmModal } from '../components/UI';
+import { exportToPDF, exportToExcel } from '../lib/exportUtils';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subYears, startOfYear, endOfYear } from 'date-fns';
 
 const SalesHistory: React.FC = () => {
-  const { language, isAdmin, theme } = useAppContext();
+  const { language, theme } = useAppContext();
+  const { user, isAdmin } = useAuth();
   const { recordAction } = useAction();
   const t = TRANSLATIONS[language];
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -178,15 +183,77 @@ const SalesHistory: React.FC = () => {
     end: endOfYear(new Date())
   }).reverse();
 
+  const handleExportPDF = () => {
+    const headers = ['Date', 'Product', 'Size', 'Qty', 'Price', 'Total'];
+    const data = filteredTransactions.map(tx => [
+      format(new Date(tx.date), 'yyyy-MM-dd'),
+      tx.product_name,
+      tx.size || '-',
+      tx.quantity,
+      tx.price,
+      tx.total
+    ]);
+    exportToPDF(`Sales Report - ${selectedMonth}`, headers, data, `sales_report_${selectedMonth}`);
+  };
+
+  const handleExportExcel = () => {
+    const data = filteredTransactions.map(tx => ({
+      Date: format(new Date(tx.date), 'yyyy-MM-dd'),
+      Product: tx.product_name,
+      Size: tx.size || '-',
+      Quantity: tx.quantity,
+      Price: tx.price,
+      Total: tx.total,
+      Note: tx.note || ''
+    }));
+    exportToExcel(data, `sales_report_${selectedMonth}`);
+  };
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <ShoppingBag className="text-green-600" />
-          {t.salesHistory}
-        </h2>
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <ShoppingBag className="text-green-600" />
+            {t.salesHistory}
+          </h2>
+          
+          <div className="flex items-center gap-2 md:hidden">
+            <button 
+              onClick={handleExportPDF}
+              className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400"
+              title="Export PDF"
+            >
+              <FileText size={18} />
+            </button>
+            <button 
+              onClick={handleExportExcel}
+              className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400"
+              title="Export Excel"
+            >
+              <Download size={18} />
+            </button>
+          </div>
+        </div>
         
         <div className="flex flex-col sm:flex-row gap-3">
+          <div className="hidden md:flex items-center gap-2 mr-2">
+            <button 
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold"
+            >
+              <FileText size={16} />
+              PDF
+            </button>
+            <button 
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold"
+            >
+              <Download size={16} />
+              Excel
+            </button>
+          </div>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input

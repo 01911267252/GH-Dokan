@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, FileText, Download } from 'lucide-react';
 import { supabase, Transaction } from '../App';
 import { useAppContext } from '../context/AppContext';
 import { TRANSLATIONS } from '../constants';
 import { formatCurrency, cn } from '../lib/utils';
+import { exportToPDF, exportToExcel } from '../lib/exportUtils';
 import { format, subMonths, startOfMonth, endOfMonth, isSameMonth } from 'date-fns';
 
 const MonthlyReport: React.FC = () => {
@@ -94,24 +95,71 @@ const MonthlyReport: React.FC = () => {
     );
   }
 
+  const handleExportPDF = () => {
+    const headers = ['Month', 'Sales', 'Expenses', 'Profit'];
+    const data = monthlyData.map(d => [
+      d.month,
+      d.sales,
+      d.expenses,
+      d.profit
+    ]);
+    exportToPDF('Monthly Financial Report', headers, data, 'monthly_report');
+  };
+
+  const handleExportExcel = () => {
+    const data = monthlyData.map(d => ({
+      Month: d.month,
+      Sales: d.sales,
+      Expenses: d.expenses,
+      Profit: d.profit
+    }));
+    exportToExcel(data, 'monthly_report');
+  };
+
   return (
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.report}</h2>
-        <div className="flex items-center gap-2 sm:gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-x-auto no-scrollbar">
-          <div className="px-3 sm:px-4 py-2 text-center border-r border-slate-100 dark:border-slate-800 whitespace-nowrap">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.sale}</p>
-            <p className="text-sm font-bold text-green-600 font-mono">{formatCurrency(totalStats.sales, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.report}</h2>
+          <div className="flex items-center gap-2 md:hidden">
+            <button onClick={handleExportPDF} className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400"><FileText size={18} /></button>
+            <button onClick={handleExportExcel} className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400"><Download size={18} /></button>
           </div>
-          <div className="px-3 sm:px-4 py-2 text-center border-r border-slate-100 dark:border-slate-800 whitespace-nowrap">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.expense}</p>
-            <p className="text-sm font-bold text-red-600 font-mono">{formatCurrency(totalStats.expenses, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
+            <button 
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold"
+            >
+              <FileText size={16} />
+              PDF
+            </button>
+            <button 
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold"
+            >
+              <Download size={16} />
+              Excel
+            </button>
           </div>
-          <div className="px-3 sm:px-4 py-2 text-center whitespace-nowrap">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.profit}</p>
-            <p className={cn("text-sm font-bold font-mono", totalStats.profit >= 0 ? "text-blue-600" : "text-red-600")}>
-              {formatCurrency(totalStats.profit, language === 'bn' ? 'bn-BD' : 'en-US')}
-            </p>
+          
+          <div className="flex items-center gap-2 sm:gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-x-auto no-scrollbar">
+            <div className="px-3 sm:px-4 py-2 text-center border-r border-slate-100 dark:border-slate-800 whitespace-nowrap">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.sale}</p>
+              <p className="text-sm font-bold text-green-600 font-mono">{formatCurrency(totalStats.sales, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
+            </div>
+            <div className="px-3 sm:px-4 py-2 text-center border-r border-slate-100 dark:border-slate-800 whitespace-nowrap">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.expense}</p>
+              <p className="text-sm font-bold text-red-600 font-mono">{formatCurrency(totalStats.expenses, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
+            </div>
+            <div className="px-3 sm:px-4 py-2 text-center whitespace-nowrap">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">{t.profit}</p>
+              <p className={cn("text-sm font-bold font-mono", totalStats.profit >= 0 ? "text-blue-600" : "text-red-600")}>
+                {formatCurrency(totalStats.profit, language === 'bn' ? 'bn-BD' : 'en-US')}
+              </p>
+            </div>
           </div>
         </div>
       </div>

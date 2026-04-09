@@ -3,13 +3,15 @@ import { motion } from 'motion/react';
 import { Receipt, Calendar, ListFilter, Type, DollarSign, Save } from 'lucide-react';
 import { supabase } from '../App';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useAction } from '../context/ActionContext';
 import { TRANSLATIONS } from '../constants';
 import { cn } from '../lib/utils';
 import { toast } from 'react-hot-toast';
 
 const AddExpense: React.FC = () => {
-  const { language, isAdmin } = useAppContext();
+  const { language } = useAppContext();
+  const { user, isAdmin } = useAuth();
   const { recordAction } = useAction();
   const t = TRANSLATIONS[language];
   const [loading, setLoading] = useState(false);
@@ -79,7 +81,7 @@ const AddExpense: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800"
+        className="bg-white dark:bg-slate-900 p-4 sm:p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800"
       >
         <div className="flex items-center gap-4 mb-8">
           <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-2xl">
@@ -100,8 +102,6 @@ const AddExpense: React.FC = () => {
               <input
                 type="date"
                 value={formData.date}
-                min="2026-01-01"
-                max="2026-12-31"
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
                 required

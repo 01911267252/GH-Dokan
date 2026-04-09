@@ -3,13 +3,15 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingBag, Calendar, Package, Hash, Tag, Save, Search, AlertCircle, ChevronRight } from 'lucide-react';
 import { supabase, Stock } from '../App';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useAction } from '../context/ActionContext';
 import { TRANSLATIONS } from '../constants';
 import { cn } from '../lib/utils';
 import { toast } from 'react-hot-toast';
 
 const AddSale: React.FC = () => {
-  const { language, isAdmin } = useAppContext();
+  const { language } = useAppContext();
+  const { user, isAdmin } = useAuth();
   const { recordAction } = useAction();
   const t = TRANSLATIONS[language as keyof typeof TRANSLATIONS];
   const [loading, setLoading] = useState(false);
@@ -156,7 +158,7 @@ const AddSale: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800"
+        className="bg-white dark:bg-slate-900 p-4 sm:p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800"
       >
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
