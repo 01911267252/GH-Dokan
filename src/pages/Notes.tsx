@@ -48,7 +48,14 @@ const Notes: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      toast.error('Admin access required');
+      return;
+    }
+    if (!formData.content || formData.content.trim() === '') {
+      toast.error('Please enter note content');
+      return;
+    }
 
     try {
       if (editingNote) {

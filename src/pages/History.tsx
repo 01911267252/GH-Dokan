@@ -235,9 +235,6 @@ const History: React.FC = () => {
                   {isAdmin && (
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                          <Edit3 size={18} />
-                        </button>
                         <button 
                           onClick={() => setDeletingId(tx.id)}
                           className="p-2 text-slate-400 hover:text-red-600 transition-colors"

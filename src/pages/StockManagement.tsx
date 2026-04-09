@@ -29,6 +29,7 @@ const StockManagement: React.FC = () => {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [isAdding, setIsAdding] = useState(false);
   const [isRestocking, setIsRestocking] = useState<Stock | null>(null);
   const [viewingDetails, setViewingDetails] = useState<Stock | null>(null);
@@ -112,7 +113,14 @@ const StockManagement: React.FC = () => {
 
   const handleAddStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      toast.error('Admin access required');
+      return;
+    }
+    if (!formData.product_name || formData.product_name.trim() === '' || formData.quantity <= 0) {
+      toast.error('Please fill all fields correctly');
+      return;
+    }
 
     try {
       const sizes = formData.size 
@@ -188,6 +196,11 @@ const StockManagement: React.FC = () => {
     e.preventDefault();
     if (!isRestocking || !isAdmin) return;
 
+    if (restockQty <= 0) {
+      toast.error('Please enter a valid quantity');
+      return;
+    }
+
     try {
       // Update stock: both initial and current increase
       const { error } = await supabase
@@ -223,6 +236,20 @@ const StockManagement: React.FC = () => {
     if (!deletingId || !isAdmin) return;
 
     try {
+      // Check for associated transactions
+      const { count, error: countError } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('stock_id', deletingId);
+
+      if (countError) throw countError;
+      
+      if (count && count > 0) {
+        toast.error("Cannot delete product with sales history. Please delete sales first.");
+        setDeletingId(null);
+        return;
+      }
+
       const { error } = await supabase
         .from('stock')
         .delete()
@@ -238,10 +265,18 @@ const StockManagement: React.FC = () => {
     }
   };
 
-  const filteredStocks = stocks.filter(s => 
-    s.product_name.toLowerCase().includes(search.toLowerCase()) ||
-    (s.size && s.size.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredStocks = stocks.filter(s => {
+    const matchesSearch = s.product_name.toLowerCase().includes(search.toLowerCase()) ||
+      (s.size && s.size.toLowerCase().includes(search.toLowerCase()));
+    
+    if (statusFilter === 'outOfStock') {
+      return matchesSearch && s.current_quantity === 0;
+    }
+    if (statusFilter === 'lowStock') {
+      return matchesSearch && s.current_quantity > 0 && s.current_quantity < 5;
+    }
+    return matchesSearch;
+  });
 
   return (
     <div className="space-y-6 pb-20">
@@ -260,6 +295,17 @@ const StockManagement: React.FC = () => {
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+            >
+              <option value="all">{t.all}</option>
+              <option value="lowStock">{t.lowStock}</option>
+              <option value="outOfStock">{t.outOfStock}</option>
+            </select>
           </div>
           {isAdmin && (
             <button

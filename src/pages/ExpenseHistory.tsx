@@ -81,7 +81,15 @@ const ExpenseHistory: React.FC = () => {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingTx || !isAdmin) return;
+    if (!editingTx || !isAdmin) {
+      toast.error('Admin access required');
+      return;
+    }
+
+    if (!editFormData.title || editFormData.title.trim() === '' || editFormData.total <= 0) {
+      toast.error('Please fill all fields correctly');
+      return;
+    }
 
     try {
       const { error } = await supabase

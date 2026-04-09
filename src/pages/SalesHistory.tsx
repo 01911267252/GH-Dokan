@@ -80,7 +80,15 @@ const SalesHistory: React.FC = () => {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingTx || !isAdmin) return;
+    if (!editingTx || !isAdmin) {
+      toast.error('Admin access required');
+      return;
+    }
+
+    if (editFormData.quantity <= 0 || editFormData.price < 0) {
+      toast.error('Please enter valid quantity and price');
+      return;
+    }
 
     try {
       // 1. If it's a stock transaction, adjust stock
@@ -93,10 +101,17 @@ const SalesHistory: React.FC = () => {
 
         if (stockData) {
           const qtyDiff = (editingTx.quantity || 0) - editFormData.quantity;
+          const newQty = stockData.current_quantity + qtyDiff;
+          
+          if (newQty < 0) {
+            toast.error("Adjustment would result in negative stock!");
+            return;
+          }
+
           await supabase
             .from('stock')
             .update({
-              current_quantity: stockData.current_quantity + qtyDiff
+              current_quantity: newQty
             })
             .eq('id', editingTx.stock_id);
         }

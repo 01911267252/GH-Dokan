@@ -46,11 +46,30 @@ export const ActionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       if (action.type === 'ADD_TRANSACTION') {
         // Undo Add = Delete
+        const tx = action.data;
+        if (tx.stock_id && tx.type === 'sale') {
+          const { data: stockData } = await supabase.from('stock').select('current_quantity').eq('id', tx.stock_id).single();
+          if (stockData) {
+            await supabase.from('stock').update({ current_quantity: stockData.current_quantity + (tx.quantity || 0) }).eq('id', tx.stock_id);
+          }
+        }
         await supabase.from('transactions').delete().eq('id', action.data.id);
       } else if (action.type === 'DELETE_TRANSACTION') {
         // Undo Delete = Re-insert
-        const { id, ...txData } = action.data;
-        await supabase.from('transactions').insert([txData]);
+        const txData = action.data;
+        if (txData.stock_id && txData.type === 'sale') {
+          const { data: stockData } = await supabase.from('stock').select('current_quantity').eq('id', txData.stock_id).single();
+          if (stockData) {
+            const newQty = stockData.current_quantity - (txData.quantity || 0);
+            if (newQty < 0) {
+              toast.error("Cannot undo delete: Insufficient stock");
+              return;
+            }
+            await supabase.from('stock').update({ current_quantity: newQty }).eq('id', txData.stock_id);
+          }
+        }
+        const { id, ...insertData } = txData;
+        await supabase.from('transactions').insert([insertData]);
       } else if (action.type === 'ADD_NOTE') {
         await supabase.from('notes').delete().eq('id', action.data.id);
       } else if (action.type === 'DELETE_NOTE') {

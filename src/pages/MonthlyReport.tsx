@@ -166,7 +166,7 @@ const MonthlyReport: React.FC = () => {
 
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800">
         {hasData ? (
-          <div className="h-[500px]">
+          <div className="h-[300px] sm:h-[400px] lg:h-[500px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#1e293b' : '#f1f5f9'} />

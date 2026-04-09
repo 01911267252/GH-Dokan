@@ -38,7 +38,7 @@ const AddExpense: React.FC = () => {
       return;
     }
 
-    if (!formData.title || formData.amount <= 0) {
+    if (!formData.title || formData.title.trim() === '' || formData.amount <= 0) {
       toast.error('Please fill all fields correctly');
       return;
     }

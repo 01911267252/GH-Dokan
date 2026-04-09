@@ -84,16 +84,18 @@ const AddSale: React.FC = () => {
     }
 
     const productName = saleMode === 'stock' ? selectedStock?.product_name : formData.product_name;
-    if (!productName || formData.price <= 0) {
+    if (!productName || productName.trim() === '' || formData.price < 0 || formData.quantity <= 0) {
       toast.error('Please fill all fields correctly');
       return;
     }
 
     if (saleMode === 'stock' && selectedStock) {
-      if (selectedStock.current_quantity === 0) {
-        toast.error(t.outOfStock + "! But allowing sale as requested.");
+      if (selectedStock.current_quantity <= 0) {
+        toast.error(t.outOfStock);
+        return;
       } else if (formData.quantity > selectedStock.current_quantity) {
-        toast.error("Warning: Quantity exceeds current stock!");
+        toast.error("Insufficient stock! Available: " + selectedStock.current_quantity);
+        return;
       }
     }
 
