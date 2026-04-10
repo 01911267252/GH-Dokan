@@ -31,7 +31,8 @@ const SalesHistory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
-  const [isCustomRange, setIsCustomRange] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [rangeType, setRangeType] = useState<'monthly' | 'daily' | 'custom'>('daily');
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -45,17 +46,22 @@ const SalesHistory: React.FC = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, [selectedMonth, isCustomRange, startDate, endDate]);
+  }, [selectedMonth, selectedDate, rangeType, startDate, endDate]);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
       let start, end;
       
-      if (isCustomRange) {
+      if (rangeType === 'custom') {
         start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
         end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+      } else if (rangeType === 'daily') {
+        start = new Date(selectedDate);
+        start.setHours(0, 0, 0, 0);
+        end = new Date(selectedDate);
         end.setHours(23, 59, 59, 999);
       } else {
         start = startOfMonth(new Date(selectedMonth));
@@ -94,12 +100,12 @@ const SalesHistory: React.FC = () => {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTx || !isAdmin) {
-      toast.error('Admin access required');
+      toast.error(t.adminRequired);
       return;
     }
 
     if (editFormData.quantity <= 0 || editFormData.price < 0) {
-      toast.error('Please enter valid quantity and price');
+      toast.error(t.fillAllFields);
       return;
     }
 
@@ -232,12 +238,16 @@ const SalesHistory: React.FC = () => {
       tx.price,
       tx.total
     ]);
-    const title = isCustomRange 
+    const title = rangeType === 'custom' 
       ? `Sales Report (${startDate} to ${endDate})`
-      : `Sales Report - ${selectedMonth}`;
-    const fileName = isCustomRange
+      : rangeType === 'daily'
+        ? `Sales Report - ${selectedDate}`
+        : `Sales Report - ${selectedMonth}`;
+    const fileName = rangeType === 'custom'
       ? `sales_report_${startDate}_to_${endDate}`
-      : `sales_report_${selectedMonth}`;
+      : rangeType === 'daily'
+        ? `sales_report_${selectedDate}`
+        : `sales_report_${selectedMonth}`;
     
     exportToPDF(title, headers, data, fileName);
   };
@@ -252,9 +262,11 @@ const SalesHistory: React.FC = () => {
       Total: tx.total,
       Note: tx.note || ''
     }));
-    const fileName = isCustomRange
+    const fileName = rangeType === 'custom'
       ? `sales_report_${startDate}_to_${endDate}`
-      : `sales_report_${selectedMonth}`;
+      : rangeType === 'daily'
+        ? `sales_report_${selectedDate}`
+        : `sales_report_${selectedMonth}`;
     exportToExcel(data, fileName);
   };
 
@@ -317,26 +329,35 @@ const SalesHistory: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1">
               <button
-                onClick={() => setIsCustomRange(false)}
+                onClick={() => setRangeType('daily')}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-                  !isCustomRange ? "bg-blue-600 text-white shadow-md" : "text-slate-500"
+                  rangeType === 'daily' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                )}
+              >
+                {t.daily}
+              </button>
+              <button
+                onClick={() => setRangeType('monthly')}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  rangeType === 'monthly' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 )}
               >
                 {t.monthly}
               </button>
               <button
-                onClick={() => setIsCustomRange(true)}
+                onClick={() => setRangeType('custom')}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-                  isCustomRange ? "bg-blue-600 text-white shadow-md" : "text-slate-500"
+                  rangeType === 'custom' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 )}
               >
                 {t.custom}
               </button>
             </div>
 
-            {isCustomRange ? (
+            {rangeType === 'custom' ? (
               <div className="flex items-center gap-2">
                 <input
                   type="date"
@@ -350,6 +371,16 @@ const SalesHistory: React.FC = () => {
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+            ) : rangeType === 'daily' ? (
+              <div className="flex items-center gap-2">
+                <Calendar className="text-slate-400" size={18} />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
             ) : (
@@ -391,7 +422,7 @@ const SalesHistory: React.FC = () => {
         >
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t.quantity}</p>
           <p className="text-2xl font-black text-blue-600 font-mono">
-            {totalItems} <span className="text-sm font-bold text-slate-400">Items</span>
+            {totalItems} <span className="text-sm font-bold text-slate-400">{language === 'bn' ? 'টি পণ্য' : 'Items'}</span>
           </p>
         </motion.div>
         <motion.div
@@ -400,7 +431,7 @@ const SalesHistory: React.FC = () => {
           transition={{ delay: 0.2 }}
           className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
         >
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Avg. Sale</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{language === 'bn' ? 'গড় বিক্রি' : 'Avg. Sale'}</p>
           <p className="text-2xl font-black text-purple-600 font-mono">
             {formatCurrency(avgSale, language === 'bn' ? 'bn-BD' : 'en-US')}
           </p>
@@ -577,7 +608,7 @@ const SalesHistory: React.FC = () => {
                     onClick={() => setEditingTx(null)}
                     className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                   >
-                    Cancel
+                    {t.cancel}
                   </button>
                   <button
                     type="submit"
@@ -599,7 +630,7 @@ const SalesHistory: React.FC = () => {
         title={t.delete}
         message={t.confirmDelete}
         confirmText={t.delete}
-        cancelText="Cancel"
+        cancelText={t.cancel}
       />
     </div>
   );

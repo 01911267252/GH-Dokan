@@ -9,7 +9,8 @@ import {
   ArrowDownRight, 
   Wallet,
   FileText,
-  Table as TableIcon
+  Table as TableIcon,
+  Calendar
 } from 'lucide-react';
 import { supabase, Transaction } from '../App';
 import { useAppContext } from '../context/AppContext';
@@ -21,6 +22,9 @@ import { ConfirmModal } from '../components/UI';
 import { exportToPDF, exportToExcel } from '../lib/exportUtils';
 import { toast } from 'react-hot-toast';
 
+import { format, startOfMonth, endOfMonth, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
+import { motion } from 'motion/react';
+
 const History: React.FC = () => {
   const { language } = useAppContext();
   const { user, isAdmin } = useAuth();
@@ -30,18 +34,43 @@ const History: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [rangeType, setRangeType] = useState<'monthly' | 'daily' | 'custom'>('daily');
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+  }, [selectedMonth, selectedDate, rangeType, startDate, endDate]);
 
   const fetchTransactions = async () => {
     try {
+      setLoading(true);
+      let start, end;
+      
+      if (rangeType === 'custom') {
+        start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+      } else if (rangeType === 'daily') {
+        start = new Date(selectedDate);
+        start.setHours(0, 0, 0, 0);
+        end = new Date(selectedDate);
+        end.setHours(23, 59, 59, 999);
+      } else {
+        start = startOfMonth(new Date(selectedMonth));
+        end = endOfMonth(new Date(selectedMonth));
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
         .eq('is_deleted', false)
+        .gte('date', start.toISOString())
+        .lte('date', end.toISOString())
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -113,31 +142,52 @@ const History: React.FC = () => {
     .reduce((sum, tx) => sum + tx.total, 0);
   
   const totalOutflow = filteredTransactions
-    .filter(tx => tx.type === 'expense')
+    .filter(tx => tx.type === 'expense' || tx.type === 'withdraw')
     .reduce((sum, tx) => sum + tx.total, 0);
 
   const netBalance = totalInflow - totalOutflow;
 
+  const monthOptions = eachMonthOfInterval({
+    start: startOfYear(new Date()),
+    end: endOfYear(new Date())
+  }).reverse();
+
   const handleExportPDF = () => {
-    const headers = ['Date', 'Type', 'Description', 'Amount'];
+    const headers = [t.date, t.type, t.description, t.amount];
     const data = filteredTransactions.map(tx => [
       formatDate(tx.date, 'en-US'),
       tx.type.toUpperCase(),
       tx.type === 'sale' ? tx.product_name : (tx.title || tx.type),
       tx.total
     ]);
-    exportToPDF('Transaction History', headers, data, 'transactions');
+    const title = rangeType === 'custom' 
+      ? `${t.history} (${startDate} to ${endDate})`
+      : rangeType === 'daily'
+        ? `${t.history} - ${selectedDate}`
+        : `${t.history} - ${selectedMonth}`;
+    const fileName = rangeType === 'custom'
+      ? `transactions_${startDate}_to_${endDate}`
+      : rangeType === 'daily'
+        ? `transactions_${selectedDate}`
+        : `transactions_${selectedMonth}`;
+    
+    exportToPDF(title, headers, data, fileName);
   };
 
   const handleExportExcel = () => {
     const data = filteredTransactions.map(tx => ({
-      Date: formatDate(tx.date, 'en-US'),
-      Type: tx.type,
-      Description: tx.type === 'sale' ? tx.product_name : (tx.title || tx.type),
-      Amount: tx.total,
-      Note: tx.note || ''
+      [t.date]: formatDate(tx.date, 'en-US'),
+      [t.type]: tx.type,
+      [t.description]: tx.type === 'sale' ? tx.product_name : (tx.title || tx.type),
+      [t.amount]: tx.total,
+      [t.note]: tx.note || ''
     }));
-    exportToExcel(data, 'transactions');
+    const fileName = rangeType === 'custom'
+      ? `transactions_${startDate}_to_${endDate}`
+      : rangeType === 'daily'
+        ? `transactions_${selectedDate}`
+        : `transactions_${selectedMonth}`;
+    exportToExcel(data, fileName);
   };
 
   return (
@@ -163,19 +213,19 @@ const History: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Inflow</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t.totalInflow}</p>
           <p className="text-2xl font-black text-green-600 font-mono">
             {formatCurrency(totalInflow, language === 'bn' ? 'bn-BD' : 'en-US')}
           </p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Outflow</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t.totalOutflow}</p>
           <p className="text-2xl font-black text-red-600 font-mono">
             {formatCurrency(totalOutflow, language === 'bn' ? 'bn-BD' : 'en-US')}
           </p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Net Balance</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t.netBalance}</p>
           <p className={cn(
             "text-2xl font-black font-mono",
             netBalance >= 0 ? "text-blue-600" : "text-red-600"
@@ -185,18 +235,93 @@ const History: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-4">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
-            placeholder="Search transactions..."
+            placeholder={t.searchTransactions}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
           />
         </div>
         
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1">
+            <button
+              onClick={() => setRangeType('daily')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                rangeType === 'daily' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
+            >
+              {t.daily}
+            </button>
+            <button
+              onClick={() => setRangeType('monthly')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                rangeType === 'monthly' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
+            >
+              {t.monthly}
+            </button>
+            <button
+              onClick={() => setRangeType('custom')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                rangeType === 'custom' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
+            >
+              {t.custom}
+            </button>
+          </div>
+
+          {rangeType === 'custom' ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              />
+              <span className="text-slate-400">to</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              />
+            </div>
+          ) : rangeType === 'daily' ? (
+            <div className="flex items-center gap-2">
+              <Calendar className="text-slate-400" size={18} />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Filter className="text-slate-400" size={18} />
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              >
+                {monthOptions.map(month => (
+                  <option key={format(month, 'yyyy-MM')} value={format(month, 'yyyy-MM')}>
+                    {format(month, 'MMMM yyyy')}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center gap-2">
           <Filter className="text-slate-400" size={18} />
           <select
@@ -208,6 +333,7 @@ const History: React.FC = () => {
             <option value="sale">{t.sale}</option>
             <option value="expense">{t.expense}</option>
             <option value="cash">{t.cash}</option>
+            <option value="withdraw">{t.withdraw}</option>
           </select>
         </div>
       </div>
@@ -218,10 +344,10 @@ const History: React.FC = () => {
             <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
               <tr>
                 <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">{t.date}</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Type</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Description</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Amount</th>
-                {isAdmin && <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 text-right whitespace-nowrap">Actions</th>}
+                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">{t.type}</th>
+                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">{t.description}</th>
+                <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">{t.amount}</th>
+                {isAdmin && <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400 text-right whitespace-nowrap">{t.actions}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -235,6 +361,7 @@ const History: React.FC = () => {
                       "px-3 py-1 rounded-full text-xs font-bold uppercase",
                       tx.type === 'sale' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
                       tx.type === 'expense' ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                      tx.type === 'withdraw' ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
                       "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                     )}>
                       {t[tx.type as keyof typeof t]}
@@ -251,11 +378,11 @@ const History: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    {tx.quantity && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Qty: {tx.quantity} × {formatCurrency(tx.price || 0, language === 'bn' ? 'bn-BD' : 'en-US')}
-                      </p>
-                    )}
+                      {tx.quantity && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {t.qty}: {tx.quantity} × {formatCurrency(tx.price || 0, language === 'bn' ? 'bn-BD' : 'en-US')}
+                        </p>
+                      )}
                     {tx.note && (
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
                         "{tx.note}"
@@ -266,9 +393,10 @@ const History: React.FC = () => {
                     <p className={cn(
                       "text-sm font-bold",
                       tx.type === 'sale' ? "text-green-600" : 
-                      tx.type === 'expense' ? "text-red-600" : "text-blue-600"
+                      tx.type === 'expense' ? "text-red-600" : 
+                      tx.type === 'withdraw' ? "text-orange-600" : "text-blue-600"
                     )}>
-                      {tx.type === 'expense' ? '-' : '+'}{formatCurrency(tx.total, language === 'bn' ? 'bn-BD' : 'en-US')}
+                      {tx.type === 'expense' || tx.type === 'withdraw' ? '-' : '+'}{formatCurrency(tx.total, language === 'bn' ? 'bn-BD' : 'en-US')}
                     </p>
                   </td>
                   {isAdmin && (
@@ -302,7 +430,7 @@ const History: React.FC = () => {
         title={t.delete}
         message={t.confirmDelete}
         confirmText={t.delete}
-        cancelText="Cancel"
+        cancelText={t.cancel || "Cancel"}
       />
     </div>
   );

@@ -92,6 +92,8 @@ const Dashboard: React.FC = () => {
         if (txDate >= monthStart && txDate <= monthEnd) monthlyExpenses += tx.total;
       } else if (tx.type === 'cash') {
         totalBalance += tx.total;
+      } else if (tx.type === 'withdraw') {
+        totalBalance -= tx.total;
       }
     });
 
@@ -214,10 +216,12 @@ const Dashboard: React.FC = () => {
                     <div className={cn(
                       "p-2 rounded-lg",
                       tx.type === 'sale' ? "bg-green-50 text-green-600" : 
-                      tx.type === 'expense' ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+                      tx.type === 'expense' ? "bg-red-50 text-red-600" : 
+                      tx.type === 'withdraw' ? "bg-orange-50 text-orange-600" : "bg-blue-50 text-blue-600"
                     )}>
                       {tx.type === 'sale' ? <ArrowUpRight size={18} /> : 
-                       tx.type === 'expense' ? <ArrowDownRight size={18} /> : <Wallet size={18} />}
+                       tx.type === 'expense' ? <ArrowDownRight size={18} /> : 
+                       tx.type === 'withdraw' ? <ArrowDownRight size={18} /> : <Wallet size={18} />}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-800 dark:text-white">
@@ -231,9 +235,10 @@ const Dashboard: React.FC = () => {
                   <p className={cn(
                     "text-sm font-bold",
                     tx.type === 'sale' ? "text-green-600" : 
-                    tx.type === 'expense' ? "text-red-600" : "text-blue-600"
+                    tx.type === 'expense' ? "text-red-600" : 
+                    tx.type === 'withdraw' ? "text-orange-600" : "text-blue-600"
                   )}>
-                    {tx.type === 'expense' ? '-' : '+'}{formatCurrency(tx.total, language === 'bn' ? 'bn-BD' : 'en-US')}
+                    {tx.type === 'expense' || tx.type === 'withdraw' ? '-' : '+'}{formatCurrency(tx.total, language === 'bn' ? 'bn-BD' : 'en-US')}
                   </p>
                 </div>
               ))}

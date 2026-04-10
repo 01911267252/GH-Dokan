@@ -24,10 +24,10 @@ const Login: React.FC<LoginProps> = ({ setActiveTab }) => {
     setTimeout(() => {
       const success = loginAsAdmin(password);
       if (success) {
-        toast.success('Admin access granted');
+        toast.success(language === 'bn' ? 'অ্যাডমিন অ্যাক্সেস মঞ্জুর করা হয়েছে' : 'Admin access granted');
         setActiveTab('dashboard');
       } else {
-        toast.error('Incorrect admin password');
+        toast.error(language === 'bn' ? 'ভুল অ্যাডমিন পাসওয়ার্ড' : 'Incorrect admin password');
       }
       setLoading(false);
     }, 500);
@@ -44,13 +44,13 @@ const Login: React.FC<LoginProps> = ({ setActiveTab }) => {
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl mb-4">
             <ShieldCheck size={32} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Admin Access</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">Enter the admin password to unlock features</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.adminAccess}</h2>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">{t.enterAdminPassword}</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Admin Password</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">{t.password}</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
@@ -75,7 +75,7 @@ const Login: React.FC<LoginProps> = ({ setActiveTab }) => {
             ) : (
               <>
                 <LogIn size={20} />
-                Unlock Admin
+                {t.unlockAdmin}
               </>
             )}
           </button>

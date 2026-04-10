@@ -19,6 +19,15 @@ export const exportToPDF = (title: string, headers: string[], data: any[][], fil
 export const exportToExcel = (data: any[], fileName: string) => {
   const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+  XLSX.writeFile(workbook, `${fileName}.xlsx`);
+};
+
+export const exportMultiSheetExcel = (sheets: { name: string, data: any[] }[], fileName: string) => {
+  const workbook = XLSX.utils.book_new();
+  sheets.forEach(sheet => {
+    const worksheet = XLSX.utils.json_to_sheet(sheet.data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheet.name);
+  });
   XLSX.writeFile(workbook, `${fileName}.xlsx`);
 };

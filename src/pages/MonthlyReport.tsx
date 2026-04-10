@@ -73,6 +73,7 @@ const MonthlyReport: React.FC = () => {
         month: format(date, 'MMM yyyy'),
         sales: 0,
         expenses: 0,
+        withdrawals: 0,
         profit: 0,
         fullDate: date
       };
@@ -85,6 +86,7 @@ const MonthlyReport: React.FC = () => {
         if (monthData) {
           if (tx.type === 'sale') monthData.sales += tx.total;
           if (tx.type === 'expense') monthData.expenses += tx.total;
+          if (tx.type === 'withdraw') monthData.withdrawals += tx.total;
           monthData.profit = monthData.sales - monthData.expenses;
         }
       }
@@ -145,26 +147,27 @@ const MonthlyReport: React.FC = () => {
   const totalStats = monthlyData.reduce((acc, curr) => ({
     sales: acc.sales + curr.sales,
     expenses: acc.expenses + curr.expenses,
+    withdrawals: acc.withdrawals + curr.withdrawals,
     profit: acc.profit + curr.profit
-  }), { sales: 0, expenses: 0, profit: 0 });
+  }), { sales: 0, expenses: 0, withdrawals: 0, profit: 0 });
 
   const handleExportPDF = () => {
-    const headers = ['Month', 'Sales', 'Expenses', 'Profit'];
+    const headers = [t.month, t.sales, t.expenses, t.profit];
     const data = monthlyData.map(d => [
       d.month,
       d.sales,
       d.expenses,
       d.profit
     ]);
-    exportToPDF('Monthly Financial Report', headers, data, 'monthly_report');
+    exportToPDF(t.report, headers, data, 'monthly_report');
   };
 
   const handleExportExcel = () => {
     const data = monthlyData.map(d => ({
-      Month: d.month,
-      Sales: d.sales,
-      Expenses: d.expenses,
-      Profit: d.profit
+      [t.month]: d.month,
+      [t.sales]: d.sales,
+      [t.expenses]: d.expenses,
+      [t.profit]: d.profit
     }));
     exportToExcel(data, 'monthly_report');
   };
@@ -286,7 +289,7 @@ const MonthlyReport: React.FC = () => {
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <Calendar className="text-blue-600" />
-              Daily Trend (Current Month)
+              {t.dailyTrend}
             </h3>
           </div>
           <div className="h-[300px]">
@@ -315,7 +318,7 @@ const MonthlyReport: React.FC = () => {
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <PieChartIcon className="text-blue-600" />
-              Expense Breakdown
+              {t.expenseBreakdown}
             </h3>
           </div>
           <div className="h-[300px] flex items-center justify-center">
@@ -343,13 +346,13 @@ const MonthlyReport: React.FC = () => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-slate-500 dark:text-slate-400">No expenses recorded this month</p>
+              <p className="text-slate-500 dark:text-slate-400">{t.noData}</p>
             )}
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Recent Monthly Summary</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">{t.recentMonthlySummary}</h3>
           <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
             {monthlyData.slice().reverse().map((data, idx) => (
               <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800">
@@ -359,20 +362,20 @@ const MonthlyReport: React.FC = () => {
                     "px-2 py-1 rounded-lg text-[10px] font-bold uppercase",
                     data.profit >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                   )}>
-                    {data.profit >= 0 ? 'Profit' : 'Loss'}
+                    {data.profit >= 0 ? t.profit : t.loss}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase">Sales</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">{t.sale}</p>
                     <p className="text-xs font-bold text-green-600">{formatCurrency(data.sales, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase">Expenses</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">{t.expense}</p>
                     <p className="text-xs font-bold text-red-600">{formatCurrency(data.expenses, language === 'bn' ? 'bn-BD' : 'en-US')}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase">Profit</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">{t.profit}</p>
                     <p className={cn("text-xs font-bold", data.profit >= 0 ? "text-blue-600" : "text-red-600")}>
                       {formatCurrency(data.profit, language === 'bn' ? 'bn-BD' : 'en-US')}
                     </p>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Wallet, Calendar, DollarSign, StickyNote, Save, History as HistoryIcon } from 'lucide-react';
+import { Wallet, Calendar, DollarSign, StickyNote, Save, History as HistoryIcon, LogOut } from 'lucide-react';
 import { supabase, Transaction } from '../App';
 import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,7 @@ import { TRANSLATIONS } from '../constants';
 import { cn, formatCurrency, formatDate } from '../lib/utils';
 import { toast } from 'react-hot-toast';
 
-const AddCash: React.FC = () => {
+const WithdrawCash: React.FC = () => {
   const { language } = useAppContext();
   const { user, isAdmin } = useAuth();
   const { recordAction } = useAction();
@@ -24,22 +24,22 @@ const AddCash: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchCashHistory();
+    fetchWithdrawHistory();
   }, []);
 
-  const fetchCashHistory = async () => {
+  const fetchWithdrawHistory = async () => {
     try {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
-        .eq('type', 'cash')
+        .eq('type', 'withdraw')
         .eq('is_deleted', false)
         .order('date', { ascending: false });
 
       if (error) throw error;
       setHistory(data || []);
     } catch (error) {
-      console.error('Error fetching cash history:', error);
+      console.error('Error fetching withdraw history:', error);
     }
   };
 
@@ -60,7 +60,7 @@ const AddCash: React.FC = () => {
       const { data, error } = await supabase
         .from('transactions')
         .insert([{
-          type: 'cash',
+          type: 'withdraw',
           date: new Date(formData.date).toISOString(),
           total: formData.amount,
           note: formData.note
@@ -76,9 +76,9 @@ const AddCash: React.FC = () => {
         amount: 0,
         note: '',
       });
-      fetchCashHistory();
+      fetchWithdrawHistory();
     } catch (error: any) {
-      console.error('Error adding cash:', error);
+      console.error('Error withdrawing cash:', error);
       toast.error(error.message || t.error);
     } finally {
       setLoading(false);
@@ -93,12 +93,12 @@ const AddCash: React.FC = () => {
         className="bg-white dark:bg-slate-900 p-4 sm:p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 h-fit"
       >
         <div className="flex items-center gap-4 mb-8">
-          <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-2xl">
-            <Wallet size={28} />
+          <div className="p-3 bg-orange-100 dark:bg-orange-900/30 text-orange-600 rounded-2xl">
+            <LogOut size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.addCash}</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">{t.ownerInvestmentDesc}</p>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.withdraw}</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{t.ownerWithdrawalDesc}</p>
           </div>
         </div>
 
@@ -112,7 +112,7 @@ const AddCash: React.FC = () => {
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all"
                 required
               />
             </div>
@@ -126,7 +126,7 @@ const AddCash: React.FC = () => {
                 min="0"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all"
                 required
               />
             </div>
@@ -138,8 +138,8 @@ const AddCash: React.FC = () => {
               <textarea
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                placeholder={language === 'bn' ? 'ঐচ্ছিক নোট...' : "Optional note..."}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all h-24 resize-none placeholder:text-slate-400"
+                placeholder="Optional note..."
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all h-24 resize-none placeholder:text-slate-400"
               />
             </div>
           </div>
@@ -148,8 +148,8 @@ const AddCash: React.FC = () => {
             type="submit"
             disabled={loading || !isAdmin}
             className={cn(
-              "w-full py-4 rounded-2xl font-bold text-white shadow-lg shadow-blue-200 dark:shadow-none transition-all flex items-center justify-center gap-2",
-              isAdmin ? "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]" : "bg-slate-400 cursor-not-allowed"
+              "w-full py-4 rounded-2xl font-bold text-white shadow-lg shadow-orange-200 dark:shadow-none transition-all flex items-center justify-center gap-2",
+              isAdmin ? "bg-orange-600 hover:bg-orange-700 active:scale-[0.98]" : "bg-slate-400 cursor-not-allowed"
             )}
           >
             {loading ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" /> : <Save size={20} />}
@@ -168,8 +168,8 @@ const AddCash: React.FC = () => {
             <HistoryIcon size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.cashHistory}</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">{t.previousInvestments}</p>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.withdrawHistory}</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{t.previousCashOuts}</p>
           </div>
         </div>
 
@@ -187,8 +187,8 @@ const AddCash: React.FC = () => {
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 italic">"{item.note}"</p>
                 )}
               </div>
-              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
-                <Wallet size={18} />
+              <div className="p-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-lg">
+                <LogOut size={18} />
               </div>
             </div>
           ))}
@@ -203,4 +203,4 @@ const AddCash: React.FC = () => {
   );
 };
 
-export default AddCash;
+export default WithdrawCash;

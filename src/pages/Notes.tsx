@@ -78,11 +78,11 @@ const Notes: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) {
-      toast.error('Admin access required');
+      toast.error(t.adminRequired);
       return;
     }
     if (!formData.content || formData.content.trim() === '') {
-      toast.error('Please enter note content');
+      toast.error(language === 'bn' ? 'অনুগ্রহ করে নোটের বিষয়বস্তু লিখুন' : 'Please enter note content');
       return;
     }
 
@@ -101,7 +101,7 @@ const Notes: React.FC = () => {
           })
           .eq('id', editingNote.id);
         if (error) throw error;
-        toast.success('Note updated');
+        toast.success(t.success);
       } else {
         const { data, error } = await supabase
           .from('notes')
@@ -115,7 +115,7 @@ const Notes: React.FC = () => {
           .select();
         if (error) throw error;
         if (data && data[0]) recordAction('ADD_NOTE', data[0]);
-        toast.success('Note added');
+        toast.success(t.success);
       }
 
       resetForm();
@@ -152,7 +152,7 @@ const Notes: React.FC = () => {
         .eq('id', deletingId);
       if (error) throw error;
       if (noteToDelete) recordAction('DELETE_NOTE', noteToDelete);
-      toast.success('Note deleted');
+      toast.success(t.success);
       setDeletingId(null);
       fetchNotes();
     } catch (error) {
@@ -205,7 +205,7 @@ const Notes: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
-              placeholder="Search notes or tags..."
+              placeholder={language === 'bn' ? 'নোট বা ট্যাগ খুঁজুন...' : "Search notes or tags..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -216,7 +216,7 @@ const Notes: React.FC = () => {
               onClick={() => setIsAdding(true)}
               className="flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
             >
-              <Plus size={20} /> Add Note
+              <Plus size={20} /> {language === 'bn' ? 'নোট যোগ করুন' : 'Add Note'}
             </button>
           )}
         </div>
@@ -234,7 +234,9 @@ const Notes: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                    {editingNote ? 'Edit Note' : 'New Note'}
+                    {editingNote 
+                      ? (language === 'bn' ? 'নোট সম্পাদনা' : 'Edit Note') 
+                      : (language === 'bn' ? 'নতুন নোট' : 'New Note')}
                   </h3>
                   <button 
                     type="button" 
@@ -260,13 +262,13 @@ const Notes: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                      <Tag size={16} /> Tags (comma separated)
+                      <Tag size={16} /> {language === 'bn' ? 'ট্যাগ (কমা দিয়ে আলাদা করুন)' : 'Tags (comma separated)'}
                     </label>
                     <input
                       type="text"
                       value={formData.tags}
                       onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                      placeholder="work, personal, important..."
+                      placeholder={language === 'bn' ? 'কাজ, ব্যক্তিগত, গুরুত্বপূর্ণ...' : "work, personal, important..."}
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                   </div>
@@ -274,12 +276,12 @@ const Notes: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <StickyNote size={16} /> Content
+                    <StickyNote size={16} /> {language === 'bn' ? 'বিষয়বস্তু' : 'Content'}
                   </label>
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    placeholder="Write your note here..."
+                    placeholder={language === 'bn' ? 'আপনার নোট এখানে লিখুন...' : "Write your note here..."}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none h-32 resize-none"
                     required
                   />
@@ -288,7 +290,7 @@ const Notes: React.FC = () => {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                      <Palette size={16} /> Color
+                      <Palette size={16} /> {language === 'bn' ? 'রঙ' : 'Color'}
                     </label>
                     <div className="flex gap-2">
                       {NOTE_COLORS.map((color) => (
@@ -318,12 +320,19 @@ const Notes: React.FC = () => {
                       >
                         <Pin size={20} />
                       </div>
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Pin Note</span>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{language === 'bn' ? 'পিন করুন' : 'Pin Note'}</span>
                     </label>
 
                     <button
+                      type="button"
+                      onClick={resetForm}
+                      className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                    >
+                      {t.cancel}
+                    </button>
+                    <button
                       type="submit"
-                      className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none"
+                      className="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none"
                     >
                       <Save size={20} /> {t.save}
                     </button>
@@ -416,7 +425,9 @@ const Notes: React.FC = () => {
               <StickyNote size={40} className="text-slate-300 dark:text-slate-700" />
             </div>
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              {searchQuery ? "No notes found matching your search" : t.noData}
+              {searchQuery 
+                ? (language === 'bn' ? "আপনার অনুসন্ধানের সাথে মিলছে এমন কোনো নোট পাওয়া যায়নি" : "No notes found matching your search") 
+                : t.noData}
             </p>
           </div>
         )}
@@ -429,7 +440,7 @@ const Notes: React.FC = () => {
         title={t.delete}
         message={t.confirmDelete}
         confirmText={t.delete}
-        cancelText="Cancel"
+        cancelText={t.cancel}
         type="danger"
       />
     </div>

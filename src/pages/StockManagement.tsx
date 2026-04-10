@@ -115,11 +115,11 @@ const StockManagement: React.FC = () => {
   const handleAddStock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) {
-      toast.error('Admin access required');
+      toast.error(t.adminRequired);
       return;
     }
     if (!formData.product_name || formData.product_name.trim() === '' || formData.quantity <= 0) {
-      toast.error('Please fill all fields correctly');
+      toast.error(t.fillAllFields);
       return;
     }
 
@@ -131,8 +131,8 @@ const StockManagement: React.FC = () => {
       for (const size of sizes) {
         // Check if this product+size already exists
         const existing = stocks.find(s => 
-          s.product_name.toLowerCase() === formData.product_name.toLowerCase() && 
-          (s.size || '').toLowerCase() === (size || '').toLowerCase()
+          s.product_name.trim().toLowerCase() === formData.product_name.trim().toLowerCase() && 
+          (s.size || '').trim().toLowerCase() === (size || '').trim().toLowerCase()
         );
 
         if (existing) {
@@ -198,7 +198,7 @@ const StockManagement: React.FC = () => {
     if (!isRestocking || !isAdmin) return;
 
     if (restockQty <= 0) {
-      toast.error('Please enter a valid quantity');
+      toast.error(t.fillAllFields);
       return;
     }
 
@@ -246,7 +246,7 @@ const StockManagement: React.FC = () => {
       if (countError) throw countError;
       
       if (count && count > 0) {
-        toast.error("Cannot delete product with sales history. Please delete sales first.");
+        toast.error(language === 'bn' ? 'বিক্রয় ইতিহাস সহ পণ্য মুছে ফেলা যাবে না। আগে বিক্রয় মুছুন।' : "Cannot delete product with sales history. Please delete sales first.");
         setDeletingId(null);
         return;
       }
@@ -333,7 +333,7 @@ const StockManagement: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
         >
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Products</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{language === 'bn' ? 'মোট পণ্য' : 'Total Products'}</p>
           <p className="text-2xl font-black text-blue-600 font-mono">{totalProducts}</p>
         </motion.div>
         <motion.div
@@ -522,12 +522,21 @@ const StockManagement: React.FC = () => {
                   />
                 </div>
                 
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none mt-4"
-                >
-                  {t.save}
-                </button>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsAdding(false)}
+                    className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                  >
+                    {t.cancel}
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+                  >
+                    {t.save}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>
@@ -562,7 +571,7 @@ const StockManagement: React.FC = () => {
               
               <form onSubmit={handleRestock} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.quantity} {t.addStock}</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.quantity}</label>
                   <input
                     type="number"
                     value={restockQty}
@@ -585,12 +594,21 @@ const StockManagement: React.FC = () => {
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none mt-4"
-                >
-                  {t.save}
-                </button>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsRestocking(null)}
+                    className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                  >
+                    {t.cancel}
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+                  >
+                    {t.save}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>
@@ -691,7 +709,7 @@ const StockManagement: React.FC = () => {
         title={t.delete}
         message={t.confirmDelete}
         confirmText={t.delete}
-        cancelText="Cancel"
+        cancelText={t.cancel}
       />
     </div>
   );

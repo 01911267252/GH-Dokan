@@ -32,7 +32,8 @@ const ExpenseHistory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
-  const [isCustomRange, setIsCustomRange] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [rangeType, setRangeType] = useState<'monthly' | 'daily' | 'custom'>('daily');
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -46,17 +47,22 @@ const ExpenseHistory: React.FC = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, [selectedMonth, isCustomRange, startDate, endDate]);
+  }, [selectedMonth, selectedDate, rangeType, startDate, endDate]);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
       let start, end;
       
-      if (isCustomRange) {
+      if (rangeType === 'custom') {
         start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
         end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+      } else if (rangeType === 'daily') {
+        start = new Date(selectedDate);
+        start.setHours(0, 0, 0, 0);
+        end = new Date(selectedDate);
         end.setHours(23, 59, 59, 999);
       } else {
         start = startOfMonth(new Date(selectedMonth));
@@ -95,12 +101,12 @@ const ExpenseHistory: React.FC = () => {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTx || !isAdmin) {
-      toast.error('Admin access required');
+      toast.error(t.adminRequired);
       return;
     }
 
     if (!editFormData.title || editFormData.title.trim() === '' || editFormData.total <= 0) {
-      toast.error('Please fill all fields correctly');
+      toast.error(t.fillAllFields);
       return;
     }
 
@@ -184,12 +190,16 @@ const ExpenseHistory: React.FC = () => {
       tx.title || '-',
       tx.total
     ]);
-    const title = isCustomRange 
+    const title = rangeType === 'custom' 
       ? `Expense Report (${startDate} to ${endDate})`
-      : `Expense Report - ${selectedMonth}`;
-    const fileName = isCustomRange
+      : rangeType === 'daily'
+        ? `Expense Report - ${selectedDate}`
+        : `Expense Report - ${selectedMonth}`;
+    const fileName = rangeType === 'custom'
       ? `expense_report_${startDate}_to_${endDate}`
-      : `expense_report_${selectedMonth}`;
+      : rangeType === 'daily'
+        ? `expense_report_${selectedDate}`
+        : `expense_report_${selectedMonth}`;
     
     exportToPDF(title, headers, data, fileName);
   };
@@ -202,9 +212,11 @@ const ExpenseHistory: React.FC = () => {
       Amount: tx.total,
       Note: tx.note || ''
     }));
-    const fileName = isCustomRange
+    const fileName = rangeType === 'custom'
       ? `expense_report_${startDate}_to_${endDate}`
-      : `expense_report_${selectedMonth}`;
+      : rangeType === 'daily'
+        ? `expense_report_${selectedDate}`
+        : `expense_report_${selectedMonth}`;
     exportToExcel(data, fileName);
   };
 
@@ -267,26 +279,35 @@ const ExpenseHistory: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1">
               <button
-                onClick={() => setIsCustomRange(false)}
+                onClick={() => setRangeType('daily')}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-                  !isCustomRange ? "bg-blue-600 text-white shadow-md" : "text-slate-500"
+                  rangeType === 'daily' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                )}
+              >
+                {t.daily}
+              </button>
+              <button
+                onClick={() => setRangeType('monthly')}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  rangeType === 'monthly' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 )}
               >
                 {t.monthly}
               </button>
               <button
-                onClick={() => setIsCustomRange(true)}
+                onClick={() => setRangeType('custom')}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-                  isCustomRange ? "bg-blue-600 text-white shadow-md" : "text-slate-500"
+                  rangeType === 'custom' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 )}
               >
                 {t.custom}
               </button>
             </div>
 
-            {isCustomRange ? (
+            {rangeType === 'custom' ? (
               <div className="flex items-center gap-2">
                 <input
                   type="date"
@@ -300,6 +321,16 @@ const ExpenseHistory: React.FC = () => {
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+            ) : rangeType === 'daily' ? (
+              <div className="flex items-center gap-2">
+                <Calendar className="text-slate-400" size={18} />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
             ) : (
@@ -341,7 +372,7 @@ const ExpenseHistory: React.FC = () => {
         >
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Count</p>
           <p className="text-2xl font-black text-blue-600 font-mono">
-            {filteredTransactions.length} <span className="text-sm font-bold text-slate-400">Entries</span>
+            {filteredTransactions.length} <span className="text-sm font-bold text-slate-400">{language === 'bn' ? 'টি এন্ট্রি' : 'Entries'}</span>
           </p>
         </motion.div>
         <motion.div
@@ -350,7 +381,7 @@ const ExpenseHistory: React.FC = () => {
           transition={{ delay: 0.2 }}
           className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
         >
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Avg. Expense</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{language === 'bn' ? 'গড় খরচ' : 'Avg. Expense'}</p>
           <p className="text-2xl font-black text-purple-600 font-mono">
             {formatCurrency(avgExpense, language === 'bn' ? 'bn-BD' : 'en-US')}
           </p>
@@ -519,7 +550,7 @@ const ExpenseHistory: React.FC = () => {
                     onClick={() => setEditingTx(null)}
                     className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                   >
-                    Cancel
+                    {t.cancel}
                   </button>
                   <button
                     type="submit"
@@ -541,7 +572,7 @@ const ExpenseHistory: React.FC = () => {
         title={t.delete}
         message={t.confirmDelete}
         confirmText={t.delete}
-        cancelText="Cancel"
+        cancelText={t.cancel}
       />
     </div>
   );

@@ -113,7 +113,7 @@ const RecycleBin: React.FC = () => {
       const deletedTransactions: DeletedItem[] = (transactionsRes.data || []).map(tx => ({
         id: tx.id,
         type: tx.type as any,
-        title: tx.type === 'sale' ? tx.product_name : tx.title || 'Cash Entry',
+        title: tx.type === 'sale' ? tx.product_name : tx.title || t.cashEntry,
         amount: tx.total,
         quantity: tx.quantity,
         deleted_at: tx.deleted_at || tx.created_at,
@@ -165,13 +165,13 @@ const RecycleBin: React.FC = () => {
 
           if (stockData) {
             if (stockData.is_deleted) {
-              toast.error("Cannot restore sale: Associated product is deleted. Restore the product first.");
+              toast.error(t.restoreSaleStockError);
               return;
             }
 
             const newQty = stockData.current_quantity - (item.originalData.quantity || 0);
             if (newQty < 0) {
-              toast.error("Cannot restore sale: Insufficient stock!");
+              toast.error(t.restoreSaleQtyError);
               return;
             }
 
@@ -378,7 +378,7 @@ const RecycleBin: React.FC = () => {
         onClose={() => setConfirmingRestore(null)}
         onConfirm={() => confirmingRestore && handleRestore(confirmingRestore)}
         title={t.restore}
-        message={t.confirmDelete.replace('delete', 'restore')}
+        message={t.confirmRestore}
         confirmText={t.restore}
         type="info"
       />

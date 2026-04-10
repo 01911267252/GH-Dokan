@@ -79,13 +79,13 @@ const AddSale: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) {
-      toast.error('Admin access required');
+      toast.error(t.adminRequired);
       return;
     }
 
     const productName = saleMode === 'stock' ? selectedStock?.product_name : formData.product_name;
     if (!productName || productName.trim() === '' || formData.price < 0 || formData.quantity <= 0) {
-      toast.error('Please fill all fields correctly');
+      toast.error(t.fillAllFields);
       return;
     }
 
@@ -94,7 +94,7 @@ const AddSale: React.FC = () => {
         toast.error(t.outOfStock);
         return;
       } else if (formData.quantity > selectedStock.current_quantity) {
-        toast.error("Insufficient stock! Available: " + selectedStock.current_quantity);
+        toast.error(t.insufficientStock + selectedStock.current_quantity);
         return;
       }
     }
@@ -169,7 +169,7 @@ const AddSale: React.FC = () => {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.addSale}</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">Record a new product sale</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">{t.recordSaleDesc}</p>
             </div>
           </div>
         </div>
@@ -283,7 +283,7 @@ const AddSale: React.FC = () => {
                       )}
                     >
                       <span className={selectedStock ? "font-bold text-slate-900 dark:text-white" : "text-slate-400"}>
-                        {selectedStock?.size || (selectedProductName ? t.selectSize : "Select product first")}
+                        {selectedStock?.size || (selectedProductName ? t.selectSize : t.selectProductFirst)}
                       </span>
                       <ChevronRight size={18} className={cn("text-slate-400 transition-transform", showSizeDropdown && "rotate-90")} />
                     </div>
@@ -306,7 +306,7 @@ const AddSale: React.FC = () => {
                                 }}
                                 className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer flex justify-between items-center border-b border-slate-50 dark:border-slate-700 last:border-0"
                               >
-                                <span className="text-sm font-bold text-slate-800 dark:text-white">{stock.size || "No Size"}</span>
+                                <span className="text-sm font-bold text-slate-800 dark:text-white">{stock.size || t.noSize}</span>
                                 <div className={cn(
                                   "text-xs font-bold px-2 py-1 rounded-lg",
                                   stock.current_quantity === 0 ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"
@@ -331,7 +331,7 @@ const AddSale: React.FC = () => {
                   type="text"
                   value={formData.product_name}
                   onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
-                  placeholder="e.g. Cricket Bat"
+                  placeholder={language === 'bn' ? 'যেমন: ক্রিকেট ব্যাট' : "e.g. Cricket Bat"}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-400"
                   required
                 />
@@ -347,7 +347,7 @@ const AddSale: React.FC = () => {
                   type="text"
                   value={formData.size}
                   onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                  placeholder="Optional size"
+                  placeholder={language === 'bn' ? 'ঐচ্ছিক সাইজ' : "Optional size"}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-400"
                 />
               </div>
@@ -367,7 +367,7 @@ const AddSale: React.FC = () => {
               />
               {saleMode === 'stock' && selectedStock && formData.quantity > selectedStock.current_quantity && (
                 <p className="text-[10px] text-orange-600 font-bold flex items-center gap-1">
-                  <AlertCircle size={12} /> {t.lowStock} warning
+                  <AlertCircle size={12} /> {t.lowStockWarning}
                 </p>
               )}
             </div>
@@ -393,7 +393,7 @@ const AddSale: React.FC = () => {
               <textarea
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                placeholder="Optional note..."
+                placeholder={language === 'bn' ? 'ঐচ্ছিক নোট...' : "Optional note..."}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all h-24 resize-none placeholder:text-slate-400"
               />
             </div>
@@ -422,7 +422,7 @@ const AddSale: React.FC = () => {
           
           {!isAdmin && (
             <p className="text-center text-red-500 text-sm font-medium">
-              Admin access required to add sales
+              {t.adminRequiredSale}
             </p>
           )}
         </form>

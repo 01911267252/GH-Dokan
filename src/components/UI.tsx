@@ -2,6 +2,9 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 
+import { useAppContext } from '../context/AppContext';
+import { TRANSLATIONS } from '../constants';
+
 interface CardProps {
   title: string;
   value: string | number;
@@ -15,6 +18,8 @@ interface CardProps {
 }
 
 export const StatCard: React.FC<CardProps> = ({ title, value, icon, trend, color, className }) => {
+  const { language } = useAppContext();
+  const t = TRANSLATIONS[language];
   const colorClasses = {
     blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
     green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
@@ -26,12 +31,12 @@ export const StatCard: React.FC<CardProps> = ({ title, value, icon, trend, color
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn("bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800", className)}
+      className={cn("bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800", className)}
     >
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{value}</h3>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 truncate">{title}</p>
+          <h3 className="text-lg sm:text-2xl font-bold text-slate-800 dark:text-white truncate">{value}</h3>
           
           {trend && (
             <div className={cn(
@@ -39,11 +44,11 @@ export const StatCard: React.FC<CardProps> = ({ title, value, icon, trend, color
               trend.isPositive ? "text-green-600" : "text-red-600"
             )}>
               <span>{trend.isPositive ? '+' : '-'}{trend.value}%</span>
-              <span className="text-slate-400 font-normal">vs last month</span>
+              <span className="text-slate-400 font-normal">{t.vsLastMonth}</span>
             </div>
           )}
         </div>
-        <div className={cn("p-3 rounded-xl", colorClasses[color])}>
+        <div className={cn("p-2 sm:p-3 rounded-xl flex-shrink-0 ml-3", colorClasses[color])}>
           {icon}
         </div>
       </div>

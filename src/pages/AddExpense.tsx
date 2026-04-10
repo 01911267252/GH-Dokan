@@ -34,12 +34,12 @@ const AddExpense: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) {
-      toast.error('Admin access required');
+      toast.error(t.adminRequired);
       return;
     }
 
     if (!formData.title || formData.title.trim() === '' || formData.amount <= 0) {
-      toast.error('Please fill all fields correctly');
+      toast.error(t.fillAllFields);
       return;
     }
 
@@ -89,7 +89,7 @@ const AddExpense: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.addExpense}</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">Record a business expense</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{t.recordExpenseDesc}</p>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ const AddExpense: React.FC = () => {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g. Shop Rent"
+                placeholder={language === 'bn' ? 'যেমন: দোকানের ভাড়া' : "e.g. Shop Rent"}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none transition-all placeholder:text-slate-400"
                 required
               />
@@ -158,7 +158,7 @@ const AddExpense: React.FC = () => {
               <textarea
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                placeholder="Optional note..."
+                placeholder={language === 'bn' ? 'ঐচ্ছিক নোট...' : "Optional note..."}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none transition-all h-24 resize-none placeholder:text-slate-400"
               />
             </div>
@@ -178,7 +178,7 @@ const AddExpense: React.FC = () => {
           
           {!isAdmin && (
             <p className="text-center text-red-500 text-sm font-medium">
-              Admin access required to add expenses
+              {t.adminRequiredExpense}
             </p>
           )}
         </form>
