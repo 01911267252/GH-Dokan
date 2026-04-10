@@ -24,6 +24,7 @@ import MonthlyReport from './pages/MonthlyReport';
 import Notes from './pages/Notes';
 import Settings from './pages/Settings';
 import StockManagement from './pages/StockManagement';
+import RecycleBin from './pages/RecycleBin';
 import Login from './pages/Login';
 import ActionHistory from './components/ActionHistory';
 
@@ -52,6 +53,8 @@ export interface Transaction {
   is_manual?: boolean;
   size?: string;
   created_at: string;
+  is_deleted?: boolean;
+  deleted_at?: string | null;
 }
 
 export interface Stock {
@@ -61,6 +64,8 @@ export interface Stock {
   initial_quantity: number;
   current_quantity: number;
   created_at: string;
+  is_deleted?: boolean;
+  deleted_at?: string | null;
 }
 
 export interface StockLog {
@@ -77,6 +82,11 @@ export interface Note {
   date: string;
   content: string;
   created_at: string;
+  is_pinned?: boolean;
+  color?: string;
+  tags?: string[];
+  is_deleted?: boolean;
+  deleted_at?: string | null;
 }
 
 const AppContent: React.FC = () => {
@@ -130,7 +140,8 @@ const AppContent: React.FC = () => {
       case 'report': return <MonthlyReport />;
       case 'notes': return <Notes />;
       case 'stock': return <StockManagement />;
-      case 'settings': return <Settings />;
+      case 'recycle-bin': return <RecycleBin />;
+      case 'settings': return <Settings setActiveTab={setActiveTab} />;
       case 'login': return <Login setActiveTab={setActiveTab} />;
       default: return <Dashboard />;
     }

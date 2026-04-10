@@ -20,7 +20,7 @@ import { toast } from 'react-hot-toast';
 import { supabase } from '../App';
 import { ConfirmModal } from '../components/UI';
 
-const Settings: React.FC = () => {
+const Settings: React.FC<{ setActiveTab: (tab: string) => void }> = ({ setActiveTab }) => {
   const { language, setLanguage, theme, setTheme } = useAppContext();
   const { user, isAdmin, signOut } = useAuth();
   const t = TRANSLATIONS[language];
@@ -148,6 +148,28 @@ const Settings: React.FC = () => {
                 )} />
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Data Management Section */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Data Management</h3>
+          <div className="space-y-4">
+            <button
+              onClick={() => setActiveTab('recycle-bin')}
+              className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl">
+                  <Trash2 size={20} />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-slate-800 dark:text-white">{t.recycleBin}</p>
+                  <p className="text-xs text-slate-500">Restore or permanently delete items</p>
+                </div>
+              </div>
+              <ShieldCheck size={20} className="text-slate-300 group-hover:text-blue-600 transition-colors" />
+            </button>
           </div>
         </div>
 

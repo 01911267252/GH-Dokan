@@ -71,6 +71,15 @@ export const TRANSLATIONS = {
     added: 'যোগ করা হয়েছে',
     sold: 'বিক্রি হয়েছে',
     viewDetails: 'বিস্তারিত দেখুন',
+    monthly: 'মাসিক',
+    custom: 'কাস্টম',
+    recycleBin: 'রিসাইকেল বিন',
+    restore: 'পুনরুদ্ধার',
+    deletePermanently: 'স্থায়ীভাবে মুছে ফেলুন',
+    deletedDate: 'মুছে ফেলার তারিখ',
+    confirmPermanentDelete: 'আপনি কি নিশ্চিত যে আপনি এটি স্থায়ীভাবে মুছে ফেলতে চান? এটি আর ফিরে পাওয়া যাবে না।',
+    enterPassword: 'পাসওয়ার্ড দিন',
+    incorrectPassword: 'ভুল পাসওয়ার্ড',
   },
   en: {
     dashboard: 'Dashboard',
@@ -144,6 +153,15 @@ export const TRANSLATIONS = {
     added: 'Added',
     sold: 'Sold',
     viewDetails: 'View Details',
+    monthly: 'Monthly',
+    custom: 'Custom',
+    recycleBin: 'Recycle Bin',
+    restore: 'Restore',
+    deletePermanently: 'Delete Permanently',
+    deletedDate: 'Deleted Date',
+    confirmPermanentDelete: 'Are you sure you want to delete this permanently? This action cannot be undone.',
+    enterPassword: 'Enter Password',
+    incorrectPassword: 'Incorrect Password',
   }
 };
 

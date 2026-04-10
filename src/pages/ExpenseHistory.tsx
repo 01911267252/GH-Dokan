@@ -32,6 +32,9 @@ const ExpenseHistory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
+  const [isCustomRange, setIsCustomRange] = useState(false);
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -43,18 +46,28 @@ const ExpenseHistory: React.FC = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, [selectedMonth]);
+  }, [selectedMonth, isCustomRange, startDate, endDate]);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const start = startOfMonth(new Date(selectedMonth));
-      const end = endOfMonth(new Date(selectedMonth));
+      let start, end;
+      
+      if (isCustomRange) {
+        start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+      } else {
+        start = startOfMonth(new Date(selectedMonth));
+        end = endOfMonth(new Date(selectedMonth));
+      }
 
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
         .eq('type', 'expense')
+        .eq('is_deleted', false)
         .gte('date', start.toISOString())
         .lte('date', end.toISOString())
         .order('date', { ascending: false });
@@ -119,7 +132,10 @@ const ExpenseHistory: React.FC = () => {
       const txToDelete = transactions.find(t => t.id === deletingId);
       const { error } = await supabase
         .from('transactions')
-        .delete()
+        .update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        })
         .eq('id', deletingId);
 
       if (error) throw error;
@@ -137,9 +153,13 @@ const ExpenseHistory: React.FC = () => {
     const searchLower = search.toLowerCase();
     return (
       tx.title?.toLowerCase().includes(searchLower) || 
-      tx.expense_type?.toLowerCase().includes(searchLower)
+      tx.expense_type?.toLowerCase().includes(searchLower) ||
+      tx.note?.toLowerCase().includes(searchLower)
     );
   });
+
+  const totalExpenses = filteredTransactions.reduce((sum, tx) => sum + tx.total, 0);
+  const avgExpense = filteredTransactions.length > 0 ? totalExpenses / filteredTransactions.length : 0;
 
   // Group by date
   const groupedTransactions = filteredTransactions.reduce((groups: { [key: string]: Transaction[] }, tx) => {
@@ -164,7 +184,14 @@ const ExpenseHistory: React.FC = () => {
       tx.title || '-',
       tx.total
     ]);
-    exportToPDF(`Expense Report - ${selectedMonth}`, headers, data, `expense_report_${selectedMonth}`);
+    const title = isCustomRange 
+      ? `Expense Report (${startDate} to ${endDate})`
+      : `Expense Report - ${selectedMonth}`;
+    const fileName = isCustomRange
+      ? `expense_report_${startDate}_to_${endDate}`
+      : `expense_report_${selectedMonth}`;
+    
+    exportToPDF(title, headers, data, fileName);
   };
 
   const handleExportExcel = () => {
@@ -175,7 +202,10 @@ const ExpenseHistory: React.FC = () => {
       Amount: tx.total,
       Note: tx.note || ''
     }));
-    exportToExcel(data, `expense_report_${selectedMonth}`);
+    const fileName = isCustomRange
+      ? `expense_report_${startDate}_to_${endDate}`
+      : `expense_report_${selectedMonth}`;
+    exportToExcel(data, fileName);
   };
 
   return (
@@ -234,21 +264,97 @@ const ExpenseHistory: React.FC = () => {
             />
           </div>
           
-          <div className="flex items-center gap-2">
-            <Filter className="text-slate-400" size={18} />
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-            >
-              {monthOptions.map(month => (
-                <option key={format(month, 'yyyy-MM')} value={format(month, 'yyyy-MM')}>
-                  {format(month, 'MMMM yyyy')}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1">
+              <button
+                onClick={() => setIsCustomRange(false)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  !isCustomRange ? "bg-blue-600 text-white shadow-md" : "text-slate-500"
+                )}
+              >
+                {t.monthly}
+              </button>
+              <button
+                onClick={() => setIsCustomRange(true)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  isCustomRange ? "bg-blue-600 text-white shadow-md" : "text-slate-500"
+                )}
+              >
+                {t.custom}
+              </button>
+            </div>
+
+            {isCustomRange ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                />
+                <span className="text-slate-400">to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Filter className="text-slate-400" size={18} />
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                >
+                  {monthOptions.map(month => (
+                    <option key={format(month, 'yyyy-MM')} value={format(month, 'yyyy-MM')}>
+                      {format(month, 'MMMM yyyy')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
+        >
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t.totalExpenses}</p>
+          <p className="text-2xl font-black text-red-600 font-mono">
+            {formatCurrency(totalExpenses, language === 'bn' ? 'bn-BD' : 'en-US')}
+          </p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
+        >
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Count</p>
+          <p className="text-2xl font-black text-blue-600 font-mono">
+            {filteredTransactions.length} <span className="text-sm font-bold text-slate-400">Entries</span>
+          </p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
+        >
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Avg. Expense</p>
+          <p className="text-2xl font-black text-purple-600 font-mono">
+            {formatCurrency(avgExpense, language === 'bn' ? 'bn-BD' : 'en-US')}
+          </p>
+        </motion.div>
       </div>
 
       {loading ? (

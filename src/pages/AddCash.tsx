@@ -33,6 +33,7 @@ const AddCash: React.FC = () => {
         .from('transactions')
         .select('*')
         .eq('type', 'cash')
+        .eq('is_deleted', false)
         .order('date', { ascending: false });
 
       if (error) throw error;

@@ -53,9 +53,12 @@ export const ActionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             await supabase.from('stock').update({ current_quantity: stockData.current_quantity + (tx.quantity || 0) }).eq('id', tx.stock_id);
           }
         }
-        await supabase.from('transactions').delete().eq('id', action.data.id);
+        await supabase.from('transactions').update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        }).eq('id', action.data.id);
       } else if (action.type === 'DELETE_TRANSACTION') {
-        // Undo Delete = Re-insert
+        // Undo Delete = Restore
         const txData = action.data;
         if (txData.stock_id && txData.type === 'sale') {
           const { data: stockData } = await supabase.from('stock').select('current_quantity').eq('id', txData.stock_id).single();
@@ -68,13 +71,20 @@ export const ActionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             await supabase.from('stock').update({ current_quantity: newQty }).eq('id', txData.stock_id);
           }
         }
-        const { id, ...insertData } = txData;
-        await supabase.from('transactions').insert([insertData]);
+        await supabase.from('transactions').update({ 
+          is_deleted: false, 
+          deleted_at: null 
+        }).eq('id', action.data.id);
       } else if (action.type === 'ADD_NOTE') {
-        await supabase.from('notes').delete().eq('id', action.data.id);
+        await supabase.from('notes').update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        }).eq('id', action.data.id);
       } else if (action.type === 'DELETE_NOTE') {
-        const { id, ...noteData } = action.data;
-        await supabase.from('notes').insert([noteData]);
+        await supabase.from('notes').update({ 
+          is_deleted: false, 
+          deleted_at: null 
+        }).eq('id', action.data.id);
       }
 
       setUndoStack(remainingUndo);
@@ -94,17 +104,27 @@ export const ActionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       if (action.type === 'ADD_TRANSACTION') {
-        // Redo Add = Re-insert
-        const { id, ...txData } = action.data;
-        await supabase.from('transactions').insert([txData]);
+        // Redo Add = Restore
+        await supabase.from('transactions').update({ 
+          is_deleted: false, 
+          deleted_at: null 
+        }).eq('id', action.data.id);
       } else if (action.type === 'DELETE_TRANSACTION') {
-        // Redo Delete = Delete again
-        await supabase.from('transactions').delete().eq('id', action.data.id);
+        // Redo Delete = Soft Delete again
+        await supabase.from('transactions').update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        }).eq('id', action.data.id);
       } else if (action.type === 'ADD_NOTE') {
-        const { id, ...noteData } = action.data;
-        await supabase.from('notes').insert([noteData]);
+        await supabase.from('notes').update({ 
+          is_deleted: false, 
+          deleted_at: null 
+        }).eq('id', action.data.id);
       } else if (action.type === 'DELETE_NOTE') {
-        await supabase.from('notes').delete().eq('id', action.data.id);
+        await supabase.from('notes').update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        }).eq('id', action.data.id);
       }
 
       setRedoStack(remainingRedo);

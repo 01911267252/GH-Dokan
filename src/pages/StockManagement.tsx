@@ -63,6 +63,7 @@ const StockManagement: React.FC = () => {
       const { data, error } = await supabase
         .from('stock')
         .select('*')
+        .eq('is_deleted', false)
         .order('product_name', { ascending: true });
 
       if (error) throw error;
@@ -252,7 +253,10 @@ const StockManagement: React.FC = () => {
 
       const { error } = await supabase
         .from('stock')
-        .delete()
+        .update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        })
         .eq('id', deletingId);
 
       if (error) throw error;
@@ -277,6 +281,10 @@ const StockManagement: React.FC = () => {
     }
     return matchesSearch;
   });
+
+  const totalProducts = stocks.length;
+  const outOfStockCount = stocks.filter(s => s.current_quantity === 0).length;
+  const lowStockCount = stocks.filter(s => s.current_quantity > 0 && s.current_quantity < 5).length;
 
   return (
     <div className="space-y-6 pb-20">
@@ -317,6 +325,35 @@ const StockManagement: React.FC = () => {
             </button>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
+        >
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Products</p>
+          <p className="text-2xl font-black text-blue-600 font-mono">{totalProducts}</p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
+        >
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t.outOfStock}</p>
+          <p className="text-2xl font-black text-red-600 font-mono">{outOfStockCount}</p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
+        >
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t.lowStock}</p>
+          <p className="text-2xl font-black text-orange-600 font-mono">{lowStockCount}</p>
+        </motion.div>
       </div>
 
       {loading ? (

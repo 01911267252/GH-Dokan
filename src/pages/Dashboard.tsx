@@ -54,6 +54,7 @@ const Dashboard: React.FC = () => {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('is_deleted', false)
         .order('date', { ascending: false });
 
       if (error) throw error;

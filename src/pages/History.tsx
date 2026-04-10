@@ -41,6 +41,7 @@ const History: React.FC = () => {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('is_deleted', false)
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -78,7 +79,10 @@ const History: React.FC = () => {
 
       const { error } = await supabase
         .from('transactions')
-        .delete()
+        .update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        })
         .eq('id', deletingId);
 
       if (error) throw error;
@@ -98,10 +102,21 @@ const History: React.FC = () => {
     const matchesSearch = 
       (tx.product_name?.toLowerCase().includes(searchLower)) ||
       (tx.title?.toLowerCase().includes(searchLower)) ||
-      (tx.expense_type?.toLowerCase().includes(searchLower));
+      (tx.expense_type?.toLowerCase().includes(searchLower)) ||
+      (tx.note?.toLowerCase().includes(searchLower));
     
     return matchesFilter && matchesSearch;
   });
+
+  const totalInflow = filteredTransactions
+    .filter(tx => tx.type === 'sale' || tx.type === 'cash')
+    .reduce((sum, tx) => sum + tx.total, 0);
+  
+  const totalOutflow = filteredTransactions
+    .filter(tx => tx.type === 'expense')
+    .reduce((sum, tx) => sum + tx.total, 0);
+
+  const netBalance = totalInflow - totalOutflow;
 
   const handleExportPDF = () => {
     const headers = ['Date', 'Type', 'Description', 'Amount'];
@@ -143,6 +158,30 @@ const History: React.FC = () => {
           >
             <TableIcon size={18} /> Excel
           </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Inflow</p>
+          <p className="text-2xl font-black text-green-600 font-mono">
+            {formatCurrency(totalInflow, language === 'bn' ? 'bn-BD' : 'en-US')}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Outflow</p>
+          <p className="text-2xl font-black text-red-600 font-mono">
+            {formatCurrency(totalOutflow, language === 'bn' ? 'bn-BD' : 'en-US')}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Net Balance</p>
+          <p className={cn(
+            "text-2xl font-black font-mono",
+            netBalance >= 0 ? "text-blue-600" : "text-red-600"
+          )}>
+            {formatCurrency(netBalance, language === 'bn' ? 'bn-BD' : 'en-US')}
+          </p>
         </div>
       </div>
 
