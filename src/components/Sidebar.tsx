@@ -19,7 +19,8 @@ import {
   ShoppingBag,
   TrendingDown,
   Package,
-  LogOut as WithdrawIcon
+  LogOut as WithdrawIcon,
+  Trophy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppContext } from '../context/AppContext';
@@ -89,8 +90,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       >
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center gap-3 mb-10 px-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-200 dark:shadow-none">
-              G
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200 dark:shadow-none">
+              <Trophy size={24} />
             </div>
             <div>
               <h1 className="text-lg font-black text-slate-800 dark:text-white leading-tight">GH Sports</h1>
