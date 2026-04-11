@@ -576,8 +576,9 @@ const SalesHistory: React.FC = () => {
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.quantity}</label>
                     <input
                       type="number"
+                      step="any"
                       value={editFormData.quantity}
-                      onChange={(e) => setEditFormData({ ...editFormData, quantity: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setEditFormData({ ...editFormData, quantity: parseFloat(e.target.value) || 0 })}
                       className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                       required
                     />
@@ -586,6 +587,7 @@ const SalesHistory: React.FC = () => {
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.price}</label>
                     <input
                       type="number"
+                      step="any"
                       value={editFormData.price}
                       onChange={(e) => setEditFormData({ ...editFormData, price: parseFloat(e.target.value) || 0 })}
                       className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"

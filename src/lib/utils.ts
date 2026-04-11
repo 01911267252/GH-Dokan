@@ -10,6 +10,7 @@ export function formatCurrency(amount: number, locale: 'bn-BD' | 'en-US' = 'bn-B
     style: 'currency',
     currency: 'BDT',
     minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(amount);
 }
 

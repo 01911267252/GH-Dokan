@@ -143,6 +143,7 @@ const AddExpense: React.FC = () => {
               </label>
               <input
                 type="number"
+                step="any"
                 min="0"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}

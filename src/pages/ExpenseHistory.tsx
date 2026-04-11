@@ -529,6 +529,7 @@ const ExpenseHistory: React.FC = () => {
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.amount}</label>
                   <input
                     type="number"
+                    step="any"
                     value={editFormData.total}
                     onChange={(e) => setEditFormData({ ...editFormData, total: parseFloat(e.target.value) || 0 })}
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"

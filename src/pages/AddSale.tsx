@@ -359,9 +359,10 @@ const AddSale: React.FC = () => {
               </label>
               <input
                 type="number"
-                min="1"
+                step="any"
+                min="0"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 required
               />
@@ -378,6 +379,7 @@ const AddSale: React.FC = () => {
               </label>
               <input
                 type="number"
+                step="any"
                 min="0"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}

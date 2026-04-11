@@ -502,11 +502,12 @@ const StockManagement: React.FC = () => {
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.quantity}</label>
                   <input
                     type="number"
+                    step="any"
                     value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                     required
-                    min="1"
+                    min="0"
                   />
                 </div>
                 <div className="space-y-2">
@@ -574,11 +575,12 @@ const StockManagement: React.FC = () => {
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.quantity}</label>
                   <input
                     type="number"
+                    step="any"
                     value={restockQty}
-                    onChange={(e) => setRestockQty(parseInt(e.target.value) || 0)}
+                    onChange={(e) => setRestockQty(parseFloat(e.target.value) || 0)}
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                     required
-                    min="1"
+                    min="0"
                   />
                 </div>
                 <div className="space-y-2">
